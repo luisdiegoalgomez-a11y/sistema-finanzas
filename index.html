@@ -3,197 +3,316 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Financiero Cloud</title>
+    <title>Enterprise Financial Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'], // Fuente para números
+                    },
+                    colors: {
+                        slate: { 850: '#1e293b', 900: '#0f172a' } // Colores corporativos oscuros
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* Utilidades Base */
         .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Tablas */
-        .parent-row { cursor: pointer; transition: all 0.15s; border-bottom: 1px solid #e2e8f0; }
-        .parent-row:hover { background-color: #f1f5f9; }
-        .child-row { background-color: #f8fafc; font-size: 0.85em; color: #475569; }
-        .text-zero { color: #cbd5e1; font-weight: 300; } 
+        /* Tabla Empresarial */
+        .table-row-group { border-bottom: 1px solid #e2e8f0; transition: background 0.1s; }
+        .table-row-group:hover { background-color: #f8fafc; cursor: pointer; }
+        .row-expanded { background-color: #f1f5f9; border-left: 3px solid #3b82f6; }
+        
+        /* Scrollbar Fina */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+<body class="bg-gray-50 text-slate-800 h-screen flex overflow-hidden font-sans">
 
-    <div id="screen-loading" class="flex-1 flex flex-col items-center justify-center p-6 text-center fade-in bg-slate-50 overflow-auto">
-        <div class="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-200">
-            <div class="text-blue-600 text-6xl mb-4">☁️</div>
-            <h1 class="text-xl font-bold text-gray-800 mb-2">Sistema Financiero Cloud</h1>
-            <p class="text-gray-400 mb-8 text-xs uppercase tracking-wide">Selecciona el periodo a consultar</p>
-            
-            <div class="flex gap-4 mb-6">
-                <div class="w-1/2 text-left">
-                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">Año</label>
-                    <select id="sel-year" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700">
-                        <option value="2025">2025</option>
-                        <option value="2026" selected>2026</option>
-                        <option value="2027">2027</option>
-                    </select>
-                </div>
-                <div class="w-1/2 text-left">
-                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">Semana</label>
-                    <select id="sel-week" class="w-full p-3 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-700">
-                        </select>
-                </div>
+    <aside class="w-64 bg-slate-900 text-white flex-col hidden md:flex shadow-2xl z-20">
+        <div class="h-16 flex items-center px-6 border-b border-slate-800">
+            <div class="font-bold text-lg tracking-wider flex items-center gap-2">
+                <span class="text-blue-500">❖</span> FINANZAS
             </div>
-
-            <button onclick="loadFromCloud()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition transform active:scale-95 flex justify-center items-center gap-2">
-                <span>🔍 Consultar Reporte</span>
+        </div>
+        
+        <div class="flex-1 py-6 px-3 space-y-1">
+            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Módulos</p>
+            
+            <button onclick="location.reload()" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md bg-slate-800 text-blue-400">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                Cargar Archivo
             </button>
             
-            <p id="status-msg" class="text-xs text-red-500 mt-4 h-4"></p>
-        </div>
-    </div>
-
-    <div id="screen-group" class="hidden flex-1 flex flex-col items-center justify-center p-4 fade-in bg-slate-50 overflow-auto">
-        <div class="w-full max-w-4xl text-center">
-            <div class="inline-flex items-center gap-3 bg-white px-4 py-1.5 rounded-full shadow-sm mb-10 border border-gray-200">
-                <span class="text-xl">✅</span>
-                <div class="text-left leading-tight">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase">ARCHIVO CARGADO</p>
-                    <p class="text-sm font-bold text-slate-800" id="file-week-display">--</p>
-                </div>
-                <button onclick="location.reload()" class="ml-3 text-xs text-red-500 hover:underline">Salir</button>
-            </div>
-
-            <h2 class="text-2xl font-bold text-slate-700 mb-8">Selecciona Empresa</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-4">
-                <div onclick="selectGroup('villas')" class="bg-white p-8 rounded-2xl shadow-md border-b-4 border-blue-500 cursor-pointer hover:shadow-xl transition transform hover:-translate-y-1 group">
-                    <div class="text-4xl mb-4">🏢</div>
-                    <h3 class="text-xl font-bold text-gray-700 group-hover:text-blue-600">Grupo Villas</h3>
-                </div>
-                <div onclick="selectGroup('pina')" class="bg-white p-8 rounded-2xl shadow-md border-b-4 border-yellow-500 cursor-pointer hover:shadow-xl transition transform hover:-translate-y-1 group">
-                    <div class="text-4xl mb-4">🍍</div>
-                    <h3 class="text-xl font-bold text-gray-700 group-hover:text-yellow-600">Grupo Piña</h3>
-                </div>
+            <div id="nav-company" class="hidden">
+                <button onclick="showScreen('screen-group')" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Seleccionar Empresa
+                </button>
+                <button class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition mt-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Dashboard
+                </button>
             </div>
         </div>
-    </div>
 
-    <div id="screen-dashboard" class="hidden flex flex-col h-full bg-slate-100 fade-in">
-        <header class="bg-white px-6 py-3 flex justify-between items-center shadow-sm z-20 border-b border-gray-200 flex-none">
-            <div class="flex items-center gap-4">
-                <button onclick="showScreen('screen-group')" class="text-gray-400 hover:text-slate-800 transition text-xl">←</button>
-                <div class="h-6 w-px bg-gray-200"></div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">JD</div>
                 <div>
-                    <h2 id="dash-title" class="text-lg font-black text-slate-700 tracking-tight">EMPRESA</h2>
-                    <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wide" id="dash-week-label">--</p>
+                    <p class="text-sm font-medium">Usuario</p>
+                    <p class="text-xs text-slate-500">Admin</p>
                 </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        
+        <div id="screen-loading" class="absolute inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center p-6 fade-in">
+            <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-sm">
+                    📂
+                </div>
+                <h1 class="text-xl font-bold text-slate-800">Acceso a Reportes</h1>
+                <p class="text-sm text-slate-500 mb-8">Selecciona el periodo fiscal para consultar.</p>
+
+                <div class="grid grid-cols-3 gap-3 mb-6">
+                    <div class="col-span-1">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">AÑO</label>
+                        <select id="sel-year" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
+                            <option value="2025">2025</option>
+                            <option value="2026" selected>2026</option>
+                            <option value="2027">2027</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-semibold text-slate-500 mb-1">PERIODO</label>
+                        <select id="sel-week" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"></select>
+                    </div>
+                </div>
+
+                <button onclick="loadFromCloud()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-lg shadow-md transition flex justify-center items-center gap-2 text-sm">
+                    <span>Consultar Datos</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+                <p id="status-msg" class="text-xs text-red-500 mt-4 h-4 font-medium"></p>
+            </div>
+            
+            <div class="mt-8">
+                <label class="cursor-pointer text-xs text-slate-400 hover:text-slate-600 transition flex items-center gap-1">
+                    <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
+                    <span>Cargar archivo local (Respaldo)</span>
+                </label>
+            </div>
+        </div>
+
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm flex-none">
+            <div class="flex items-center gap-4">
+                <h2 id="page-title" class="text-lg font-bold text-slate-800">Resumen Financiero</h2>
+                <div class="h-4 w-px bg-gray-300"></div>
+                <span id="dash-week-label" class="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">--</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span class="text-xs font-medium text-slate-500">Conectado</span>
             </div>
         </header>
 
-        <div class="flex-1 overflow-auto p-4 md:p-6 w-full max-w-7xl mx-auto custom-scroll">
-            <div class="mb-6">
-                <h3 class="text-xs font-bold text-gray-500 uppercase mb-3">🏦 Disponibilidad Bancaria</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-emerald-50 rounded-xl p-4 border border-emerald-100"><p class="text-[10px] font-bold text-emerald-600 uppercase">Colones</p><p id="bank-crc" class="text-2xl font-bold text-emerald-800 mt-1">₡0</p></div>
-                    <div class="bg-blue-50 rounded-xl p-4 border border-blue-100"><p class="text-[10px] font-bold text-blue-600 uppercase">Dólares</p><p id="bank-usd" class="text-2xl font-bold text-blue-800 mt-1">$0</p></div>
-                </div>
-            </div>
+        <div id="screen-group" class="hidden flex-1 p-8 bg-gray-50 overflow-auto items-center justify-center flex">
+            <div class="w-full max-w-5xl">
+                <h3 class="text-xl font-bold text-slate-800 mb-6">Unidades de Negocio</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div onclick="selectGroup('villas')" class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-500 cursor-pointer transition-all duration-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-3 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            </div>
+                            <span class="text-xs font-bold text-gray-400 uppercase">Inmobiliaria</span>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-800">Grupo Villas</h4>
+                        <p class="text-sm text-slate-500 mt-1">Gestión administrativa y mantenimiento.</p>
+                    </div>
 
-            <div class="mb-3"><h3 class="text-xs font-bold text-gray-500 uppercase">📉 Reporte de Egresos</h3></div>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-400"><p class="text-[10px] font-bold text-gray-400 uppercase">Egresos ₡</p><p id="expense-total-crc" class="text-xl font-bold text-slate-800">₡0</p></div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-pink-500"><p class="text-[10px] font-bold text-gray-400 uppercase">Egresos $</p><p id="expense-total-usd" class="text-xl font-bold text-slate-800">$0</p></div>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left border-collapse">
-                        <thead class="bg-gray-50 text-gray-500 uppercase text-[10px] tracking-wider border-b border-gray-200">
-                            <tr>
-                                <th class="px-4 py-3 w-8"></th><th class="px-4 py-3 font-bold w-1/3">Categoría</th><th class="px-4 py-3 font-bold text-right text-yellow-700">Total ₡</th><th class="px-4 py-3 font-bold text-right text-pink-700">Total $</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body" class="text-slate-600"></tbody>
-                        <tfoot class="bg-slate-50 border-t border-gray-200">
-                            <tr><td colspan="2" class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase">Total:</td><td id="footer-crc" class="px-4 py-3 text-right font-bold">₡0</td><td id="footer-usd" class="px-4 py-3 text-right font-bold">$0</td></tr>
-                        </tfoot>
-                    </table>
+                    <div onclick="selectGroup('pina')" class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-yellow-500 cursor-pointer transition-all duration-200">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-3 bg-yellow-50 rounded-lg text-yellow-600 group-hover:bg-yellow-500 group-hover:text-white transition">
+                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <span class="text-xs font-bold text-gray-400 uppercase">Agroindustria</span>
+                        </div>
+                        <h4 class="text-lg font-bold text-slate-800">Grupo Piña</h4>
+                        <p class="text-sm text-slate-500 mt-1">Producción, exportación y planilla agrícola.</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        <div id="screen-dashboard" class="hidden flex-1 overflow-auto bg-gray-50 flex flex-col">
+            
+            <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 sticky top-0 z-10">
+                <button onclick="showScreen('screen-group')" class="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">
+                    ← <span class="hidden md:inline">Volver a Empresas</span>
+                </button>
+                <div class="h-4 w-px bg-gray-300"></div>
+                <h2 id="dash-title" class="text-sm font-bold text-slate-800 uppercase tracking-wide">--</h2>
+            </div>
+
+            <div class="p-6 max-w-7xl mx-auto w-full space-y-6">
+
+                <div>
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Posición de Caja</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center relative overflow-hidden">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Banco Colones</p>
+                                <p id="bank-crc" class="text-2xl font-bold font-mono text-slate-800 mt-1 tracking-tight">₡0</p>
+                            </div>
+                            <div class="h-10 w-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 font-bold">₡</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center relative overflow-hidden">
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase">Banco Dólares</p>
+                                <p id="bank-usd" class="text-2xl font-bold font-mono text-slate-800 mt-1 tracking-tight">$0.00</p>
+                            </div>
+                            <div class="h-10 w-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold">$</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-end justify-between mb-3 px-1">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ejecución de Gastos</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div class="bg-slate-800 text-white p-4 rounded-lg shadow-sm flex justify-between items-center">
+                            <span class="text-xs font-medium text-slate-400 uppercase">Total Egresos ₡</span>
+                            <span id="expense-total-crc" class="text-lg font-bold font-mono">₡0</span>
+                        </div>
+                        <div class="bg-slate-800 text-white p-4 rounded-lg shadow-sm flex justify-between items-center">
+                            <span class="text-xs font-medium text-slate-400 uppercase">Total Egresos $</span>
+                            <span id="expense-total-usd" class="text-lg font-bold font-mono">$0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left">
+                                <thead class="bg-gray-50 border-b border-gray-200 text-xs text-slate-500 uppercase font-semibold">
+                                    <tr>
+                                        <th class="px-4 py-3 w-10"></th>
+                                        <th class="px-4 py-3">Concepto / Partida</th>
+                                        <th class="px-4 py-3 text-right">Egresos ₡</th>
+                                        <th class="px-4 py-3 text-right">Egresos $</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body" class="divide-y divide-gray-100 text-slate-700">
+                                    </tbody>
+                                <tfoot class="bg-gray-50 border-t border-gray-200 font-bold text-slate-800">
+                                    <tr>
+                                        <td colspan="2" class="px-4 py-3 text-right text-xs uppercase">Totales Finales:</td>
+                                        <td id="footer-crc" class="px-4 py-3 text-right font-mono">₡0</td>
+                                        <td id="footer-usd" class="px-4 py-3 text-right font-mono">$0.00</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
 
     <script>
-        // LISTAS DE ORDEN
+        // CONFIGURACIÓN DE LISTAS
         const ORDER_PINA = ["Mano Obra Finca","Mano Obra Terceros (Contratista)","Planillas y Cargas Sociales","Servicios Gerencia","Vacaciones y Liquidación","Ret. CCSS Empleado","CCSS","Caja Chica","Aguinaldos","Liquidaciones de personal","Maquila","Pagos Municipales","Servicios Públicos","Canon Pozos","Pensión","Transporte de Fruta ¢","Transporte de Fruta $ (Villas)","Insumos Agrícolas $","Combustible","Alquiler","Taller Materiales e Insumos","Costos de Cartón - Etiquetas","Gastos Indirectos ¢","Gastos Indirectos $","Proveedores Crédito ¢","Proveedores Crédito $","Viabilidades Ambientales","Operación ¢","Operación $","INS","Compra Fruta","Banco Pichincha","Gastos Indirectos Julesyor","Tramites de Exportaciones $","Tramites de Exportaciones ¢","Trasportes Alquilados $"];
         const ORDER_VILLAS = ["Mano de Obra","Servicios Públicos","Mantenimiento","Proveedores","Caja Chica","Impuestos","Seguridad","Jardinería","Alquileres"];
 
         let dataVillas=[], dataPina=[], currentData=[], currentOrder=[], loadedWeek="--";
 
-        // INICIALIZAR SELECTOR DE SEMANAS (1 a 53)
         window.onload = () => {
             const selWeek = document.getElementById('sel-week');
             for(let i=1; i<=53; i++) {
                 const opt = document.createElement('option');
-                const val = i.toString().padStart(2, '0'); // 01, 02, ...
-                opt.value = val;
-                opt.innerText = `Semana ${val}`;
+                const val = i.toString().padStart(2, '0');
+                opt.value = val; opt.innerText = `Semana ${val}`;
+                if(val==="06") opt.selected = true;
                 selWeek.appendChild(opt);
             }
-            // Seleccionar semana actual aprox (opcional)
         };
 
-        // --- FUNCIÓN CLAVE: CARGAR DESDE LA NUBE ---
         async function loadFromCloud() {
             const year = document.getElementById('sel-year').value;
             const week = document.getElementById('sel-week').value;
-            const btn = document.querySelector('button');
+            const btn = document.querySelector('#screen-loading button');
             const msg = document.getElementById('status-msg');
 
-            // CONSTRUIR EL NOMBRE DEL ARCHIVO: Semana_2026_06.xlsx
             const fileName = `Semana_${year}_${week}.xlsx`;
-            // RUTA RELATIVA: Busca en la carpeta "excels" que crearás en GitHub
             const filePath = `./excels/${fileName}`;
 
-            btn.disabled = true;
-            btn.innerHTML = `<span class="animate-spin">↻</span> Buscando...`;
-            msg.innerText = "";
+            btn.disabled = true; btn.innerHTML = `<span class="animate-pulse">Conectando...</span>`; msg.innerText = "";
 
             try {
-                // Fetch con cache-busting para que no guarde versiones viejas
-                const response = await fetch(filePath + '?t=' + new Date().getTime());
+                let response = await fetch(filePath + '?t=' + Date.now());
+                if (!response.ok) response = await fetch(`./${fileName}?t=` + Date.now()); // Intento raiz
+                if (!response.ok) throw new Error("404");
+
+                const buffer = await response.arrayBuffer();
+                processWorkbook(buffer, `S${week} - ${year}`);
+            } catch (error) {
+                msg.innerText = `Error: Archivo no encontrado (${fileName})`;
+            } finally {
+                btn.disabled = false; btn.innerHTML = `<span>Consultar Datos</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
+            }
+        }
+
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => processWorkbook(new Uint8Array(ev.target.result), file.name);
+            reader.readAsArrayBuffer(file);
+        });
+
+        function processWorkbook(data, label) {
+            try {
+                const wb = XLSX.read(data, {type:'array'});
+                if(wb.SheetNames.length < 2) { alert("Formato incorrecto: Se requieren hojas 'Villas' y 'Pina'"); return; }
                 
-                if (!response.ok) {
-                    throw new Error("No se encontró el archivo.");
-                }
-
-                const arrayBuffer = await response.arrayBuffer();
-                const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-
-                if (workbook.SheetNames.length < 2) throw new Error("Excel incompleto (Faltan hojas).");
-
-                dataVillas = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                dataPina = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[1]]);
+                dataVillas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                dataPina = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]]);
                 
-                loadedWeek = `Semana ${week} (${year})`;
-                document.getElementById('file-week-display').innerText = fileName;
-                document.getElementById('dash-week-label').innerText = loadedWeek.toUpperCase();
+                loadedWeek = label;
+                document.getElementById('dash-week-label').innerText = loadedWeek;
+                // Mostrar barra lateral
+                document.getElementById('nav-company').classList.remove('hidden');
                 
                 showScreen('screen-group');
-
-            } catch (error) {
-                msg.innerText = `Error: No existe el archivo ${fileName} en la nube.`;
-                console.error(error);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `🔍 Consultar Reporte`;
-            }
+            } catch(e) { alert("Archivo dañado o inválido"); }
         }
 
         function showScreen(id){
             ['screen-loading','screen-group','screen-dashboard'].forEach(s=>document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
+            document.getElementById(id).classList.add('fade-in');
         }
 
         function selectGroup(g){
@@ -237,25 +356,56 @@
             const tbody = document.getElementById('table-body'); tbody.innerHTML='';
             keys.forEach((cat,idx)=>{
                 const g=groups[cat]; if(g.tCRC===0 && g.tUSD===0) return;
-                const rid=`r${idx}`; const row=document.createElement('tr'); row.className='parent-row group'; row.onclick=()=>toggle(rid);
-                const styleCRC=g.tCRC>0?'text-yellow-700 bg-yellow-50/50 font-bold':'text-zero';
-                const styleUSD=g.tUSD>0?'text-pink-700 bg-pink-50/50 font-bold':'text-zero';
-                row.innerHTML=`<td class="px-4 py-3 text-center"><div id="i${rid}" class="text-gray-300 text-[10px] transition-transform">▼</div></td><td class="px-4 py-3 font-bold text-slate-700 text-xs md:text-sm">${cat}</td><td class="px-4 py-3 text-right text-xs md:text-sm ${styleCRC}">${g.tCRC>0?fmtCRC.format(g.tCRC):'-'}</td><td class="px-4 py-3 text-right text-xs md:text-sm ${styleUSD}">${g.tUSD>0?fmtUSD.format(g.tUSD):'-'}</td>`;
+                const rid=`r${idx}`; const row=document.createElement('tr'); row.className='table-row-group group'; row.onclick=()=>toggle(rid, row);
+                
+                const styleCRC=g.tCRC>0?'text-slate-800 font-bold':'text-slate-300 font-light';
+                const styleUSD=g.tUSD>0?'text-slate-800 font-bold':'text-slate-300 font-light';
+                
+                row.innerHTML=`
+                    <td class="px-4 py-4 text-center text-gray-400 text-[10px]"><span id="i${rid}" class="transition-transform duration-200 block">▶</span></td>
+                    <td class="px-4 py-4 font-semibold text-slate-700">${cat}</td>
+                    <td class="px-4 py-4 text-right font-mono text-sm ${styleCRC}">${g.tCRC>0?fmtCRC.format(g.tCRC):'-'}</td>
+                    <td class="px-4 py-4 text-right font-mono text-sm ${styleUSD}">${g.tUSD>0?fmtUSD.format(g.tUSD):'-'}</td>
+                `;
                 tbody.appendChild(row);
+
                 g.items.forEach(it=>{
-                    const sub=document.createElement('tr'); sub.className=`child-row hidden ${rid}`;
+                    const sub=document.createElement('tr'); sub.className=`hidden ${rid} bg-gray-50 border-b border-gray-100`;
                     let d=it.f; if(typeof d==='number') d=new Date((d-(25567+2))*86400000).toLocaleDateString('es-CR'); else if(typeof d==='string'&&d.includes('T')) d=d.split('T')[0];
-                    sub.innerHTML=`<td></td><td class="px-4 py-2 pl-8 flex items-center gap-2 border-l-2 border-gray-100">${d?`<span class="text-[9px] bg-white border px-1 rounded text-gray-400 font-mono">${d}</span>`:''}<span class="truncate">${it.c||'Detalle'}</span></td><td class="px-4 py-2 text-right text-xs text-yellow-800 opacity-70">${it.cr>0?fmtCRC.format(it.cr):'-'}</td><td class="px-4 py-2 text-right text-xs text-pink-800 opacity-70">${it.us>0?fmtUSD.format(it.us):'-'}</td>`;
+                    sub.innerHTML=`
+                        <td></td>
+                        <td class="px-4 py-2 pl-8 flex items-center gap-3 border-l-2 border-blue-100">
+                            ${d?`<span class="text-[10px] bg-white border border-gray-200 px-1.5 py-0.5 rounded text-gray-400 font-mono">${d}</span>`:''}
+                            <span class="text-xs text-slate-500 truncate">${it.c||'Detalle'}</span>
+                        </td>
+                        <td class="px-4 py-2 text-right font-mono text-xs text-slate-500">${it.cr>0?fmtCRC.format(it.cr):'-'}</td>
+                        <td class="px-4 py-2 text-right font-mono text-xs text-slate-500">${it.us>0?fmtUSD.format(it.us):'-'}</td>
+                    `;
                     tbody.appendChild(sub);
                 });
             });
-            if(tbody.innerHTML==='') tbody.innerHTML='<tr><td colspan="4" class="p-8 text-center text-gray-400">Sin egresos registrados.</td></tr>';
+            if(tbody.innerHTML==='') tbody.innerHTML='<tr><td colspan="4" class="p-8 text-center text-slate-400 text-sm">No hay movimientos registrados para este periodo.</td></tr>';
         }
 
-        function toggle(id){
-            const rows=document.querySelectorAll(`.${id}`); const icon=document.getElementById(`i${id}`);
-            let hidden=true; rows.forEach(r=>{if(r.classList.contains('hidden')){r.classList.remove('hidden');hidden=false;}else{r.classList.add('hidden');}});
-            icon.style.transform=hidden?'rotate(0deg)':'rotate(180deg)';
+        function toggle(id, rowEl){
+            const rows=document.querySelectorAll(`.${id}`); 
+            const icon=document.getElementById(`i${id}`);
+            let hidden=true;
+            
+            // Toggle visual state
+            if(rowEl.classList.contains('row-expanded')) {
+                rowEl.classList.remove('row-expanded');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                rowEl.classList.add('row-expanded');
+                icon.style.transform = 'rotate(90deg)';
+                hidden = false;
+            }
+
+            rows.forEach(r=>{
+                if(hidden) r.classList.add('hidden');
+                else r.classList.remove('hidden');
+            });
         }
     </script>
 </body>
