@@ -193,21 +193,19 @@
                                 <span class="text-xs font-medium text-slate-500">(-) Gastos Totales</span>
                                 <span id="calc-exp-crc" class="font-mono text-sm font-bold text-red-500">₡0</span>
                             </div>
+                            
+                            <div id="row-exchange-crc" class="hidden flex justify-between items-center border-b border-gray-100 pb-2 bg-green-50 -mx-5 px-5 py-2">
+                                <span class="text-xs font-bold text-green-700 flex items-center gap-1">
+                                    <span class="text-[10px]">✚</span> Compra Divisas (Cobertura)
+                                </span>
+                                <span id="calc-exchange-crc" class="font-mono text-sm font-bold text-green-700">₡0</span>
+                            </div>
+
                             <div class="flex justify-between items-end pt-1">
                                 <span class="text-xs font-bold text-slate-800 uppercase">Disponible Neto</span>
                                 <span id="calc-net-crc" class="font-mono text-2xl font-black text-slate-800">₡0</span>
                             </div>
                         </div>
-                    </div>
-                    <div id="alert-exchange" class="hidden bg-yellow-50 border-t border-yellow-200 p-3 flex items-center justify-between animate-pulse">
-                        <div class="flex items-center gap-2 text-yellow-800">
-                            <span class="text-lg">⚠️</span>
-                            <div class="flex flex-col">
-                                <span class="text-[10px] font-bold uppercase tracking-wide">Déficit Detectado</span>
-                                <span class="text-xs font-medium" id="alert-exchange-text">Vender dólares...</span>
-                            </div>
-                        </div>
-                        <span class="text-lg font-black text-yellow-900 font-mono" id="alert-exchange-amount">$0</span>
                     </div>
                 </div>
 
@@ -230,6 +228,14 @@
                                 <span class="text-xs font-medium text-slate-500">(-) Gastos Totales</span>
                                 <span id="calc-exp-usd" class="font-mono text-sm font-bold text-red-500">$0.00</span>
                             </div>
+
+                            <div id="row-exchange-usd" class="hidden flex justify-between items-center border-b border-gray-100 pb-2 bg-yellow-50 -mx-5 px-5 py-2">
+                                <span class="text-xs font-bold text-yellow-700 flex items-center gap-1">
+                                    <span class="text-[10px]">➖</span> Compra de Colones
+                                </span>
+                                <span id="calc-exchange-usd" class="font-mono text-sm font-bold text-red-500">$0.00</span>
+                            </div>
+
                             <div class="flex justify-between items-end pt-1">
                                 <span class="text-xs font-bold text-slate-800 uppercase">Disponible Neto</span>
                                 <span id="calc-net-usd" class="font-mono text-2xl font-black text-slate-800">$0.00</span>
@@ -383,45 +389,62 @@
             const fmtFull = (n,c) => new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n);
             const val = (n) => n > 0 ? n : '';
 
-            // --- CALCULADORA DE LIQUIDEZ ---
-            
-            // 1. Colones
-            const netCRC = totals.bkCRC - totals.crc;
+            // --- LÓGICA DE DÉFICIT Y CAMBIO ---
+            let deficitCRC = 0;
+            let dollarsToSell = 0;
+            let netCRC = totals.bkCRC - totals.crc;
+            let netUSD = totals.bkUSD - totals.usd;
+            const exchangeRate = parseFloat(document.getElementById('input-exchange-rate').value) || 0;
+
+            // 1. Detectar Déficit en Colones
+            if (netCRC < 0 && exchangeRate > 0) {
+                deficitCRC = Math.abs(netCRC);
+                dollarsToSell = deficitCRC / exchangeRate;
+                
+                // AJUSTAR VISUALMENTE
+                // En la tarjeta de Colones, sumamos el cambio para que quede en 0 (cubierto)
+                // En la tarjeta de Dólares, restamos el cambio
+                netCRC = 0; // Queda cubierto
+                netUSD = netUSD - dollarsToSell;
+            }
+
+            // --- RENDERIZAR TARJETA COLONES ---
             document.getElementById('calc-bank-crc').innerText = fmtFull(totals.bkCRC, 'CRC');
             document.getElementById('calc-exp-crc').innerText = fmtFull(totals.crc, 'CRC');
             const elNetCRC = document.getElementById('calc-net-crc');
             elNetCRC.innerText = fmtFull(netCRC, 'CRC');
-            elNetCRC.className = netCRC >= 0 
-                ? 'font-mono text-2xl font-black text-emerald-600' 
-                : 'font-mono text-2xl font-black text-red-600';
-
-            // --- LÓGICA DE DÉFICIT Y VENTA DE DÓLARES ---
-            const exchangeRate = parseFloat(document.getElementById('input-exchange-rate').value) || 0;
-            const alertBox = document.getElementById('alert-exchange');
             
-            if (netCRC < 0 && exchangeRate > 0) {
-                const deficit = Math.abs(netCRC);
-                const dollarsNeeded = deficit / exchangeRate;
-                
-                alertBox.classList.remove('hidden');
-                document.getElementById('alert-exchange-text').innerText = `Faltan ${fmtFull(deficit, 'CRC')} para cubrir gastos.`;
-                document.getElementById('alert-exchange-amount').innerText = `Vender: $${dollarsNeeded.toLocaleString('en-US', {maximumFractionDigits:2})}`;
+            // Si hubo déficit cubierto
+            const rowExchCRC = document.getElementById('row-exchange-crc');
+            if (dollarsToSell > 0) {
+                rowExchCRC.classList.remove('hidden');
+                document.getElementById('calc-exchange-crc').innerText = fmtFull(deficitCRC, 'CRC');
+                elNetCRC.className = 'font-mono text-2xl font-black text-slate-800'; // Ya no es rojo porque se cubrió
             } else {
-                alertBox.classList.add('hidden');
+                rowExchCRC.classList.add('hidden');
+                // Color normal (rojo si falta y no hay TC, verde si sobra)
+                elNetCRC.className = (totals.bkCRC - totals.crc) >= 0 ? 'font-mono text-2xl font-black text-emerald-600' : 'font-mono text-2xl font-black text-red-600';
             }
 
-            // 2. Dólares
-            const netUSD = totals.bkUSD - totals.usd;
+
+            // --- RENDERIZAR TARJETA DÓLARES ---
             document.getElementById('calc-bank-usd').innerText = fmtFull(totals.bkUSD, 'USD');
             document.getElementById('calc-exp-usd').innerText = fmtFull(totals.usd, 'USD');
+            
+            const rowExchUSD = document.getElementById('row-exchange-usd');
+            if (dollarsToSell > 0) {
+                rowExchUSD.classList.remove('hidden');
+                document.getElementById('calc-exchange-usd').innerText = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(dollarsToSell);
+            } else {
+                rowExchUSD.classList.add('hidden');
+            }
+
             const elNetUSD = document.getElementById('calc-net-usd');
-            elNetUSD.innerText = fmtFull(netUSD, 'USD');
-            elNetUSD.className = netUSD >= 0 
-                ? 'font-mono text-2xl font-black text-blue-600' 
-                : 'font-mono text-2xl font-black text-red-600';
+            elNetUSD.innerText = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(netUSD);
+            elNetUSD.className = netUSD >= 0 ? 'font-mono text-2xl font-black text-blue-600' : 'font-mono text-2xl font-black text-red-600';
 
 
-            // Render Tabla
+            // --- TABLA DETALLE ---
             const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
             let keys = Object.keys(groups).sort((a,b) => {
                 const iA = currentOrder.indexOf(a), iB = currentOrder.indexOf(b);
