@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grupo ZASA - ERP Financiero</title>
+    <title>Grupo ZASA - Tesorería Inteligente</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -37,11 +37,19 @@
         .input-edit { background: transparent; border: 1px solid transparent; border-radius: 2px; padding: 0 4px; width: 85px; text-align: right; font-family: 'JetBrains Mono'; font-size: 12px; color: #0f172a; height: 24px; }
         .input-edit:hover, .input-edit:focus { background: #f8fafc; border-color: #cbd5e1; outline: none; }
         .input-changed { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         
+        /* Input Tipo de Cambio */
+        .input-tc { 
+            background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; 
+            font-family: 'JetBrains Mono'; font-weight: bold; text-align: center;
+            border-radius: 6px; height: 32px; width: 80px; transition: all 0.2s;
+        }
+        .input-tc:focus { border-color: #3b82f6; background: white; outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+
         /* Scroll */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -136,67 +144,96 @@
     </div>
 
     <div id="screen-dashboard" class="hidden flex-1 flex flex-col overflow-hidden bg-white">
-        <div class="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center flex-none shadow-sm z-10 h-14">
+        <div class="bg-white border-b border-gray-200 px-4 py-2 flex justify-between items-center flex-none shadow-sm z-10 h-16">
             <div class="flex items-center gap-3">
                 <button onclick="showScreen('screen-group')" class="text-slate-400 hover:text-slate-800 font-bold text-[10px] uppercase tracking-wide flex items-center gap-1 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 transition">
                     <span>←</span> Menú
                 </button>
-                <div class="h-4 w-px bg-gray-200"></div>
+                <div class="h-6 w-px bg-gray-200"></div>
                 <div class="flex flex-col">
                     <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Módulo</span>
                     <h2 id="dash-title" class="text-sm font-black text-slate-800 uppercase leading-none">--</h2>
                 </div>
             </div>
             
-            <button onclick="saveExcel()" class="hidden text-[10px] font-bold text-white bg-slate-900 hover:bg-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transition transform active:scale-95" id="btn-save">
-                💾 GUARDAR CAMBIOS
-            </button>
+            <div class="flex items-center gap-4">
+                <div class="flex flex-col items-end mr-2">
+                    <label class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Tipo de Cambio ₡</label>
+                    <input type="number" id="input-exchange-rate" class="input-tc" placeholder="0.00" onchange="renderDashboard()">
+                </div>
+
+                <div class="h-8 w-px bg-gray-200"></div>
+
+                <button onclick="saveExcel()" class="hidden text-[10px] font-bold text-white bg-slate-900 hover:bg-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transition transform active:scale-95" id="btn-save">
+                    💾 GUARDAR CAMBIOS
+                </button>
+            </div>
         </div>
 
         <div class="flex-1 overflow-auto p-4 max-w-6xl mx-auto w-full space-y-4 custom-scroll">
             
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-                    <div class="bg-slate-50 px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Flujo en Colones</span>
-                        <span class="text-xs font-black text-slate-300">CRC</span>
+                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden relative group">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-slate-800"></div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-slate-800"></span> Flujo Colones
+                            </h3>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded">CRC</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span class="text-xs font-medium text-slate-500">Saldo Bancos</span>
+                                <span id="calc-bank-crc" class="font-mono text-sm font-bold text-slate-700">₡0</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span class="text-xs font-medium text-slate-500">(-) Gastos Totales</span>
+                                <span id="calc-exp-crc" class="font-mono text-sm font-bold text-red-500">₡0</span>
+                            </div>
+                            <div class="flex justify-between items-end pt-1">
+                                <span class="text-xs font-bold text-slate-800 uppercase">Disponible Neto</span>
+                                <span id="calc-net-crc" class="font-mono text-2xl font-black text-slate-800">₡0</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="p-4 space-y-3">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-500">Bancos (Saldo)</span>
-                            <span id="calc-bank-crc" class="font-mono text-slate-700">₡0</span>
+                    <div id="alert-exchange" class="hidden bg-yellow-50 border-t border-yellow-200 p-3 flex items-center justify-between animate-pulse">
+                        <div class="flex items-center gap-2 text-yellow-800">
+                            <span class="text-lg">⚠️</span>
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold uppercase tracking-wide">Déficit Detectado</span>
+                                <span class="text-xs font-medium" id="alert-exchange-text">Vender dólares...</span>
+                            </div>
                         </div>
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-500">(-) Gastos Ejecutados</span>
-                            <span id="calc-exp-crc" class="font-mono text-red-500">₡0</span>
-                        </div>
-                        <div class="border-t border-slate-200 my-2"></div>
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-800 text-xs uppercase">Restante Neto</span>
-                            <span id="calc-net-crc" class="font-mono text-xl font-black text-slate-800">₡0</span>
-                        </div>
+                        <span class="text-lg font-black text-yellow-900 font-mono" id="alert-exchange-amount">$0</span>
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
-                    <div class="bg-slate-50 px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Flujo en Dólares</span>
-                        <span class="text-xs font-black text-slate-300">USD</span>
-                    </div>
-                    <div class="p-4 space-y-3">
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-500">Bancos (Saldo)</span>
-                            <span id="calc-bank-usd" class="font-mono text-slate-700">$0.00</span>
+                <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden relative">
+                    <div class="absolute top-0 left-0 w-1.5 h-full bg-blue-600"></div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-blue-600"></span> Flujo Dólares
+                            </h3>
+                            <span class="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">USD</span>
                         </div>
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-500">(-) Gastos Ejecutados</span>
-                            <span id="calc-exp-usd" class="font-mono text-red-500">$0.00</span>
-                        </div>
-                        <div class="border-t border-slate-200 my-2"></div>
-                        <div class="flex justify-between items-center">
-                            <span class="font-bold text-slate-800 text-xs uppercase">Restante Neto</span>
-                            <span id="calc-net-usd" class="font-mono text-xl font-black text-slate-800">$0.00</span>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span class="text-xs font-medium text-slate-500">Saldo Bancos</span>
+                                <span id="calc-bank-usd" class="font-mono text-sm font-bold text-slate-700">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                                <span class="text-xs font-medium text-slate-500">(-) Gastos Totales</span>
+                                <span id="calc-exp-usd" class="font-mono text-sm font-bold text-red-500">$0.00</span>
+                            </div>
+                            <div class="flex justify-between items-end pt-1">
+                                <span class="text-xs font-bold text-slate-800 uppercase">Disponible Neto</span>
+                                <span id="calc-net-usd" class="font-mono text-2xl font-black text-slate-800">$0.00</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -346,7 +383,7 @@
             const fmtFull = (n,c) => new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n);
             const val = (n) => n > 0 ? n : '';
 
-            // --- LÓGICA DE CALCULADORA DE LIQUIDEZ ---
+            // --- CALCULADORA DE LIQUIDEZ ---
             
             // 1. Colones
             const netCRC = totals.bkCRC - totals.crc;
@@ -355,8 +392,23 @@
             const elNetCRC = document.getElementById('calc-net-crc');
             elNetCRC.innerText = fmtFull(netCRC, 'CRC');
             elNetCRC.className = netCRC >= 0 
-                ? 'font-mono text-xl font-black text-emerald-600' // Verde si sobra
-                : 'font-mono text-xl font-black text-red-600';    // Rojo si falta
+                ? 'font-mono text-2xl font-black text-emerald-600' 
+                : 'font-mono text-2xl font-black text-red-600';
+
+            // --- LÓGICA DE DÉFICIT Y VENTA DE DÓLARES ---
+            const exchangeRate = parseFloat(document.getElementById('input-exchange-rate').value) || 0;
+            const alertBox = document.getElementById('alert-exchange');
+            
+            if (netCRC < 0 && exchangeRate > 0) {
+                const deficit = Math.abs(netCRC);
+                const dollarsNeeded = deficit / exchangeRate;
+                
+                alertBox.classList.remove('hidden');
+                document.getElementById('alert-exchange-text').innerText = `Faltan ${fmtFull(deficit, 'CRC')} para cubrir gastos.`;
+                document.getElementById('alert-exchange-amount').innerText = `Vender: $${dollarsNeeded.toLocaleString('en-US', {maximumFractionDigits:2})}`;
+            } else {
+                alertBox.classList.add('hidden');
+            }
 
             // 2. Dólares
             const netUSD = totals.bkUSD - totals.usd;
@@ -365,8 +417,8 @@
             const elNetUSD = document.getElementById('calc-net-usd');
             elNetUSD.innerText = fmtFull(netUSD, 'USD');
             elNetUSD.className = netUSD >= 0 
-                ? 'font-mono text-xl font-black text-blue-600' // Azul/Verde si sobra
-                : 'font-mono text-xl font-black text-red-600'; // Rojo si falta
+                ? 'font-mono text-2xl font-black text-blue-600' 
+                : 'font-mono text-2xl font-black text-red-600';
 
 
             // Render Tabla
