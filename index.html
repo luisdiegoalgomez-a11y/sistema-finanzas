@@ -20,10 +20,10 @@
         .group-header:hover { background-color: #f1f5f9; }
         .group-expanded { background-color: #f8fafc; border-left: 4px solid #1e293b; }
         
-        /* Inputs de Edición */
+        /* Inputs de Edición Limpios */
         .input-edit {
             background-color: #fff;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #e2e8f0;
             border-radius: 4px;
             padding: 2px 6px;
             width: 100px;
@@ -39,11 +39,16 @@
             background-color: #eff6ff;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
+        /* Si el input tiene valor modificado, se pinta verde suave */
         .input-changed {
-            background-color: #f0fdf4; /* Verde claro si se modificó */
+            background-color: #f0fdf4; 
             border-color: #16a34a;
             font-weight: bold;
+            color: #15803d;
         }
+        /* Ocultar flechas de input number */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
         /* Scroll */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -67,7 +72,6 @@
             <button onclick="saveExcel()" class="hidden text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 flex items-center gap-2 px-4 py-2 rounded-lg shadow-md transition transform active:scale-95" id="btn-save">
                 <span>💾</span> GUARDAR CAMBIOS
             </button>
-            
             <button onclick="location.reload()" class="text-xs font-bold text-slate-600 hover:text-slate-900 bg-white hover:bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 transition">
                 📂 Cerrar
             </button>
@@ -139,8 +143,8 @@
 
             <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                 <div class="bg-blue-50/50 px-6 py-2 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-xs font-bold text-blue-800 uppercase">Ejecución Presupuestaria (Editable)</h3>
-                    <span class="text-[10px] text-blue-400">Edita las celdas blancas para actualizar el "Ejecutado"</span>
+                    <h3 class="text-xs font-bold text-blue-800 uppercase">Ejecución Presupuestaria</h3>
+                    <span class="text-[10px] text-blue-400">Las celdas vacías indican valor cero.</span>
                 </div>
                 <table class="w-full text-sm">
                     <thead class="bg-gray-100 text-slate-500 text-[10px] uppercase font-bold">
@@ -160,14 +164,12 @@
     </div>
 
     <script>
-        // CONFIGURACIÓN
         const ORDER_PINA = ["Mano Obra Finca","Mano Obra Terceros (Contratista)","Planillas y Cargas Sociales","Servicios Gerencia","Vacaciones y Liquidación","Ret. CCSS Empleado","CCSS","Caja Chica","Aguinaldos","Liquidaciones de personal","Maquila","Pagos Municipales","Servicios Públicos","Canon Pozos","Pensión","Transporte de Fruta ¢","Transporte de Fruta $ (Villas)","Insumos Agrícolas $","Combustible","Alquiler","Taller Materiales e Insumos","Costos de Cartón - Etiquetas","Gastos Indirectos ¢","Gastos Indirectos $","Proveedores Crédito ¢","Proveedores Crédito $","Viabilidades Ambientales","Operación ¢","Operación $","INS","Compra Fruta","Banco Pichincha","Gastos Indirectos Julesyor","Tramites de Exportaciones $","Tramites de Exportaciones ¢","Trasportes Alquilados $"];
         const ORDER_VILLAS = ["Mano de Obra","Servicios Públicos","Mantenimiento","Proveedores","Caja Chica","Impuestos","Seguridad","Jardinería","Alquileres"];
 
-        // Variables Globales (Estado)
         let globalWorkbook = null;
         let activeSheetName = "";
-        let rawData = []; // Referencia directa a los objetos de SheetJS para mutarlos
+        let rawData = []; 
         let groups = {};
         let currentOrder = [];
         let loadedFileName = "";
@@ -217,22 +219,20 @@
                 document.getElementById('header-file').innerText = name;
                 document.getElementById('screen-loading').classList.add('hidden');
                 document.getElementById('screen-group').classList.remove('hidden');
-                document.getElementById('btn-save').classList.remove('hidden'); // Activar Guardado
+                document.getElementById('btn-save').classList.remove('hidden');
             } catch(e) { alert("Archivo inválido"); }
         }
 
         function selectGroup(g) {
             if(g==='villas') { 
-                activeSheetName = globalWorkbook.SheetNames[0]; // Asumimos Villas es Hoja 1
+                activeSheetName = globalWorkbook.SheetNames[0]; 
                 currentOrder = ORDER_VILLAS;
                 document.getElementById('dash-title').innerText = "GRUPO VILLAS";
             } else {
-                activeSheetName = globalWorkbook.SheetNames[1]; // Asumimos Piña es Hoja 2
+                activeSheetName = globalWorkbook.SheetNames[1]; 
                 currentOrder = ORDER_PINA;
                 document.getElementById('dash-title').innerText = "GRUPO PIÑA";
             }
-            
-            // Convertir hoja a JSON modificable
             rawData = XLSX.utils.sheet_to_json(globalWorkbook.Sheets[activeSheetName]);
             renderDashboard();
             showScreen('screen-dashboard');
@@ -244,17 +244,11 @@
 
             rawData.forEach((row, index) => {
                 const cat = (row.Categoria||row.Concepto||"Varios").trim();
-                
-                // LÓGICA DE VALORES: Si existe Ejecutado, se usa. Si no, se usa el Inicial.
                 const initCRC = parseFloat(row.Colones || 0);
                 const initUSD = parseFloat(row.Dolares || 0);
-                
-                // Ejecutado es lo que se muestra y suma
-                // Si la columna no existe en Excel, la tratamos como undefined
                 let execCRC = row.Colones_Ejecutados !== undefined ? parseFloat(row.Colones_Ejecutados) : initCRC;
                 let execUSD = row.Dolares_Ejecutados !== undefined ? parseFloat(row.Dolares_Ejecutados) : initUSD;
 
-                // Bancos
                 if(cat.toUpperCase().includes('BANCOS') || cat.toUpperCase().includes('SALDO')) {
                     totals.bkCRC += execCRC; totals.bkUSD += execUSD; return;
                 }
@@ -265,14 +259,14 @@
                 totals.crc += execCRC;
                 totals.usd += execUSD;
 
+                // Solo mostramos si hay algún valor > 0 en Plan o Ejecutado
                 if(execCRC > 0 || execUSD > 0 || initCRC > 0 || initUSD > 0) {
                     groups[cat].items.push({
-                        idx: index, // Indice real en rawData para editar luego
+                        idx: index,
                         desc: row.Concepto || "Sin detalle",
-                        date: row.Fecha,
                         iC: initCRC, iU: initUSD,
                         eC: execCRC, eU: execUSD,
-                        isModC: row.Colones_Ejecutados !== undefined, // Flag visual
+                        isModC: row.Colones_Ejecutados !== undefined,
                         isModU: row.Dolares_Ejecutados !== undefined
                     });
                 }
@@ -282,18 +276,18 @@
 
         function renderDashboard() {
             const totals = calculateData();
-            const fmt = (n,c) => new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c}).format(n);
+            // Función Helper para formatear (Solo si > 0)
+            const fmt = (n,c) => n > 0 ? new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c}).format(n) : '';
+            // Función Helper para valores de Input (Solo si > 0)
+            const val = (n) => n > 0 ? n : '';
 
-            // KPIs
-            document.getElementById('bank-crc').innerText = fmt(totals.bkCRC, 'CRC');
-            document.getElementById('bank-usd').innerText = fmt(totals.bkUSD, 'USD');
-            ['head-total-crc'].forEach(i => document.getElementById(i).innerText = fmt(totals.crc, 'CRC'));
-            ['head-total-usd'].forEach(i => document.getElementById(i).innerText = fmt(totals.usd, 'USD'));
+            document.getElementById('bank-crc').innerText = totals.bkCRC > 0 ? new Intl.NumberFormat('es-CR',{style:'currency',currency:'CRC'}).format(totals.bkCRC) : '₡0';
+            document.getElementById('bank-usd').innerText = totals.bkUSD > 0 ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(totals.bkUSD) : '$0.00';
+            ['head-total-crc'].forEach(i => document.getElementById(i).innerText = totals.crc > 0 ? new Intl.NumberFormat('es-CR',{style:'currency',currency:'CRC'}).format(totals.crc) : '₡0');
+            ['head-total-usd'].forEach(i => document.getElementById(i).innerText = totals.usd > 0 ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(totals.usd) : '$0.00');
 
-            // Tabla
             const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
             
-            // Ordenar
             let keys = Object.keys(groups).sort((a,b) => {
                 const iA = currentOrder.indexOf(a), iB = currentOrder.indexOf(b);
                 if(iA!==-1 && iB!==-1) return iA-iB; if(iA!==-1) return -1; if(iB!==-1) return 1; return a.localeCompare(b);
@@ -303,43 +297,41 @@
                 const g = groups[k]; if(g.tC===0 && g.tU===0) return;
                 const rid = `g-${idx}`;
 
-                // HEADER
                 const tr = document.createElement('tr');
                 tr.className = 'group-header';
                 tr.onclick = () => toggle(rid, tr);
                 tr.innerHTML = `
                     <td class="px-6 py-4 text-center text-[10px] text-gray-400">▶</td>
                     <td class="px-6 py-4 font-bold text-slate-700">${k}</td>
-                    <td class="px-4 py-4 text-right text-xs text-gray-400 font-mono">-</td>
+                    <td class="px-4 py-4 text-right text-xs text-gray-400 font-mono"></td>
                     <td class="px-4 py-4 text-right font-bold text-slate-800 font-mono">${fmt(g.tC,'CRC')}</td>
-                    <td class="px-4 py-4 text-right text-xs text-gray-400 font-mono">-</td>
+                    <td class="px-4 py-4 text-right text-xs text-gray-400 font-mono"></td>
                     <td class="px-4 py-4 text-right font-bold text-slate-800 font-mono">${fmt(g.tU,'USD')}</td>
                 `;
                 tbody.appendChild(tr);
 
-                // HIJOS
                 g.items.forEach(it => {
                     const sub = document.createElement('tr');
                     sub.className = `hidden bg-gray-50 border-l-4 border-slate-800 ${rid}`;
                     
-                    // Inputs de Edición
-                    // Nota: Si el usuario borra el input, guardamos undefined para volver al original
                     sub.innerHTML = `
                         <td></td>
                         <td class="px-6 py-2 pl-8 text-xs text-slate-500 font-medium">${it.desc}</td>
                         
-                        <td class="px-4 py-2 text-right text-[10px] text-gray-400 font-mono mt-1">${it.iC>0?fmt(it.iC,'CRC'):'-'}</td>
+                        <td class="px-4 py-2 text-right text-[10px] text-gray-400 font-mono mt-1">${fmt(it.iC,'CRC')}</td>
                         <td class="px-4 py-2 text-right">
-                            <input type="number" value="${it.eC}" 
+                            <input type="number" value="${val(it.eC)}" 
                                 onchange="updateValue(${it.idx}, 'Colones_Ejecutados', this.value)"
-                                class="input-edit ${it.isModC?'input-changed':''}" placeholder="${it.iC}">
+                                class="input-edit ${it.isModC?'input-changed':''}" 
+                                placeholder="${val(it.iC)}">
                         </td>
 
-                        <td class="px-4 py-2 text-right text-[10px] text-gray-400 font-mono mt-1">${it.iU>0?fmt(it.iU,'USD'):'-'}</td>
+                        <td class="px-4 py-2 text-right text-[10px] text-gray-400 font-mono mt-1">${fmt(it.iU,'USD')}</td>
                         <td class="px-4 py-2 text-right">
-                            <input type="number" value="${it.eU}" 
+                            <input type="number" value="${val(it.eU)}" 
                                 onchange="updateValue(${it.idx}, 'Dolares_Ejecutados', this.value)"
-                                class="input-edit ${it.isModU?'input-changed':''}" placeholder="${it.iU}">
+                                class="input-edit ${it.isModU?'input-changed':''}" 
+                                placeholder="${val(it.iU)}">
                         </td>
                     `;
                     tbody.appendChild(sub);
@@ -347,34 +339,19 @@
             });
         }
 
-        // --- LÓGICA DE ACTUALIZACIÓN ---
         function updateValue(idx, field, val) {
-            // Si el valor está vacío, eliminamos la propiedad para que vuelva al original (reset)
-            if(val === "") {
-                delete rawData[idx][field];
-            } else {
-                rawData[idx][field] = parseFloat(val);
-            }
-            // Re-renderizar para actualizar totales
+            if(val === "") delete rawData[idx][field];
+            else rawData[idx][field] = parseFloat(val);
             renderDashboard();
-            
-            // Mantener el grupo abierto (Un pequeño truco de UX)
-            // En una app real de React esto es automatico, aqui es manual.
-            // Por simplicidad, el render colapsa todo. El usuario verá el total actualizado.
         }
 
-        // --- GUARDAR EXCEL ---
         function saveExcel() {
-            // Actualizar la hoja actual en el workbook global con los datos modificados
             const newSheet = XLSX.utils.json_to_sheet(rawData);
             globalWorkbook.Sheets[activeSheetName] = newSheet;
-
-            // Descargar
             XLSX.writeFile(globalWorkbook, `EDITADO_${loadedFileName}`);
-            alert("✅ Archivo guardado. \nPor favor sube 'EDITADO_" + loadedFileName + "' a la carpeta 'excels' en GitHub para hacer los cambios públicos.");
+            alert("✅ Archivo guardado. Sube 'EDITADO_" + loadedFileName + "' a GitHub.");
         }
 
-        // Utilidades visuales
         function showScreen(id) {
             ['screen-group','screen-dashboard'].forEach(s=>document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
