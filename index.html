@@ -9,43 +9,69 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #334155; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Estilos Tabla */
-        .group-header { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.2s; }
-        .group-header:hover { background-color: #f1f5f9; }
-        .group-expanded { background-color: #f8fafc; border-left: 4px solid #1e293b; }
+        /* === ESTILO DE BLOQUES (NUEVO) === */
         
-        /* Inputs de Edición Limpios */
+        /* El Encabezado de Categoria (Padre) */
+        .group-header { 
+            background-color: #e2e8f0; /* Gris más oscuro para diferenciar */
+            border-bottom: 1px solid #cbd5e1; 
+            cursor: pointer; 
+            transition: all 0.2s;
+        }
+        .group-header:hover { 
+            background-color: #cbd5e1; /* Efecto hover más notorio */
+        }
+        
+        /* Cuando el grupo está abierto */
+        .group-expanded { 
+            background-color: #1e293b !important; /* Se vuelve oscuro al abrir */
+            color: #ffffff !important;            /* Texto blanco */
+            border-bottom: none;
+        }
+        .group-expanded td { color: white !important; }
+        .group-expanded .icon-arrow { transform: rotate(90deg); color: white; }
+
+        /* Las filas de detalle (Hijos) */
+        .detail-row { 
+            background-color: #ffffff; 
+            border-left: 4px solid #1e293b; /* Línea conectora visual */
+            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        /* Inputs de Edición "Fantasma" (Limpio) */
         .input-edit {
-            background-color: #fff;
-            border: 1px solid #e2e8f0;
+            background-color: transparent;
+            border: 1px solid transparent; /* Invisible por defecto */
             border-radius: 4px;
-            padding: 2px 6px;
+            padding: 4px 8px;
             width: 100px;
             text-align: right;
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             color: #0f172a;
             transition: all 0.2s;
         }
-        .input-edit:focus {
+        /* Al pasar el mouse o enfocar, aparece el borde */
+        .input-edit:hover, .input-edit:focus {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
             outline: none;
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
         }
-        /* Si el input tiene valor modificado, se pinta verde suave */
+        /* Si tiene valor modificado, se resalta en verde */
         .input-changed {
-            background-color: #f0fdf4; 
+            background-color: #dcfce7; 
             border-color: #16a34a;
             font-weight: bold;
             color: #15803d;
         }
+        
         /* Ocultar flechas de input number */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -79,86 +105,102 @@
     </header>
 
     <div id="screen-loading" class="absolute inset-0 z-50 bg-gray-100/95 backdrop-blur-sm flex flex-col items-center justify-center p-6">
-        <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200 text-center">
+        <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-2xl border border-gray-200 text-center relative">
+            
+            <img src="logo-zasa.png" class="w-20 h-20 mx-auto mb-4 object-contain">
             <h2 class="text-2xl font-black text-slate-800 mb-1">Acceso Corporativo</h2>
-            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 my-6">
+            
+            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200 my-6 relative">
+                 <div id="loading-spinner" class="hidden absolute inset-0 bg-white/90 flex flex-col items-center justify-center z-10 rounded-xl">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mb-2"></div>
+                    <span class="text-xs font-bold text-slate-600">Procesando...</span>
+                </div>
+
                 <p class="text-xs font-bold text-slate-400 uppercase mb-3">Seleccione Periodo</p>
                 <div class="flex gap-3 mb-4">
                     <select id="sel-year" onchange="resetWeek()" class="w-1/3 bg-white border-2 border-gray-200 rounded-lg text-sm font-bold p-3 outline-none"><option value="2026">2026</option></select>
                     <select id="sel-week" onchange="loadFromCloud()" class="w-2/3 bg-white border-2 border-gray-200 rounded-lg text-sm font-bold p-3 outline-none hover:bg-gray-50 cursor-pointer"></select>
                 </div>
-                <div id="loading-spinner" class="hidden text-xs font-bold text-blue-600 animate-pulse">Cargando datos...</div>
                 <p id="status-msg" class="text-[11px] font-bold text-red-500 min-h-[1rem]"></p>
             </div>
-            <label class="cursor-pointer text-xs text-slate-500 hover:text-slate-800 font-bold flex justify-center items-center gap-1">
-                <span>📂</span> Cargar archivo local <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
+            
+            <label class="cursor-pointer text-xs text-slate-500 hover:text-slate-800 font-bold flex justify-center items-center gap-1 opacity-60 hover:opacity-100">
+                <span>📂</span> Cargar archivo local manualmente <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
             </label>
         </div>
     </div>
 
     <div id="screen-group" class="hidden flex-1 bg-gray-50 flex items-center justify-center p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-            <div onclick="selectGroup('villas')" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 cursor-pointer hover:border-blue-600 hover:shadow-xl transition group relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-2 bg-blue-600"></div>
-                <h3 class="text-xl font-bold text-slate-800 group-hover:text-blue-800">Grupo Villas</h3>
-                <span class="text-xs font-bold text-blue-500 uppercase">Maquinaria y Transporte</span>
+            <div onclick="selectGroup('villas')" class="bg-white p-10 rounded-2xl shadow-sm border border-gray-200 cursor-pointer hover:border-blue-600 hover:shadow-xl transition group relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-3 bg-blue-600"></div>
+                <h3 class="text-2xl font-bold text-slate-800 group-hover:text-blue-800 mb-1">Grupo Villas</h3>
+                <span class="text-xs font-black text-white bg-blue-600 px-2 py-1 rounded uppercase tracking-wider">Maquinaria y Transporte</span>
+                <p class="text-sm text-gray-400 mt-4">Gestión de flota y mantenimiento.</p>
             </div>
-            <div onclick="selectGroup('pina')" class="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 cursor-pointer hover:border-yellow-500 hover:shadow-xl transition group relative overflow-hidden">
-                <div class="absolute left-0 top-0 bottom-0 w-2 bg-yellow-500"></div>
-                <h3 class="text-xl font-bold text-slate-800 group-hover:text-yellow-700">Grupo Piña</h3>
-                <span class="text-xs font-bold text-yellow-600 uppercase">Agroindustria</span>
+            <div onclick="selectGroup('pina')" class="bg-white p-10 rounded-2xl shadow-sm border border-gray-200 cursor-pointer hover:border-yellow-500 hover:shadow-xl transition group relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-3 bg-yellow-500"></div>
+                <h3 class="text-2xl font-bold text-slate-800 group-hover:text-yellow-700 mb-1">Grupo Piña</h3>
+                <span class="text-xs font-black text-yellow-900 bg-yellow-400 px-2 py-1 rounded uppercase tracking-wider">Agroindustria</span>
+                <p class="text-sm text-gray-400 mt-4">Planillas, producción y exportación.</p>
             </div>
         </div>
     </div>
 
-    <div id="screen-dashboard" class="hidden flex-1 flex flex-col overflow-hidden bg-white">
-        <div class="bg-gray-50 border-b border-gray-200 px-8 py-4 flex justify-between items-center flex-none">
+    <div id="screen-dashboard" class="hidden flex-1 flex flex-col overflow-hidden bg-gray-100">
+        <div class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center flex-none shadow-sm z-10">
             <div class="flex items-center gap-4">
-                <button onclick="showScreen('screen-group')" class="text-slate-400 hover:text-slate-800 font-bold">← VOLVER</button>
+                <button onclick="showScreen('screen-group')" class="text-slate-400 hover:text-slate-800 font-bold text-xs uppercase tracking-wide">← Volver al Menú</button>
+                <div class="h-4 w-px bg-gray-200"></div>
                 <h2 id="dash-title" class="text-lg font-black text-slate-800 uppercase">--</h2>
             </div>
             <div class="flex gap-8 text-xs">
                 <div class="text-right">
-                    <span class="text-slate-400 font-bold uppercase block">Total Ejecutado ₡</span>
-                    <span id="head-total-crc" class="font-bold text-slate-800 font-mono text-lg">₡0</span>
+                    <span class="text-slate-400 font-bold uppercase block tracking-wider text-[10px]">Total Ejecutado ₡</span>
+                    <span id="head-total-crc" class="font-bold text-slate-800 font-mono text-xl">₡0</span>
                 </div>
                 <div class="text-right">
-                    <span class="text-slate-400 font-bold uppercase block">Total Ejecutado $</span>
-                    <span id="head-total-usd" class="font-bold text-slate-800 font-mono text-lg">$0.00</span>
+                    <span class="text-slate-400 font-bold uppercase block tracking-wider text-[10px]">Total Ejecutado $</span>
+                    <span id="head-total-usd" class="font-bold text-slate-800 font-mono text-xl">$0.00</span>
                 </div>
             </div>
         </div>
 
-        <div class="flex-1 overflow-auto p-8 max-w-7xl mx-auto w-full space-y-6">
+        <div class="flex-1 overflow-auto p-8 max-w-7xl mx-auto w-full space-y-8 custom-scroll">
             <div class="grid grid-cols-2 gap-6">
-                <div class="bg-white rounded-xl border border-gray-200 p-4 flex justify-between items-center shadow-sm border-l-4 border-emerald-500">
-                    <div><p class="text-[10px] font-bold text-gray-400 uppercase">Bancos Colones</p><p id="bank-crc" class="text-2xl font-bold font-mono text-slate-800">₡0</p></div>
-                    <div class="text-emerald-200 text-3xl font-black">₡</div>
+                <div class="bg-white rounded-xl border border-gray-200 p-5 flex justify-between items-center shadow-sm border-b-4 border-emerald-500">
+                    <div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tesorería Colones</p><p id="bank-crc" class="text-3xl font-bold font-mono text-slate-800 mt-1">₡0</p></div>
+                    <div class="text-emerald-100 text-4xl font-black">₡</div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-4 flex justify-between items-center shadow-sm border-l-4 border-blue-500">
-                    <div><p class="text-[10px] font-bold text-gray-400 uppercase">Bancos Dólares</p><p id="bank-usd" class="text-2xl font-bold font-mono text-slate-800">$0</p></div>
-                    <div class="text-blue-200 text-3xl font-black">$</div>
+                <div class="bg-white rounded-xl border border-gray-200 p-5 flex justify-between items-center shadow-sm border-b-4 border-blue-500">
+                    <div><p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tesorería Dólares</p><p id="bank-usd" class="text-3xl font-bold font-mono text-slate-800 mt-1">$0</p></div>
+                    <div class="text-blue-100 text-4xl font-black">$</div>
                 </div>
             </div>
 
-            <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <div class="bg-blue-50/50 px-6 py-2 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-xs font-bold text-blue-800 uppercase">Ejecución Presupuestaria</h3>
-                    <span class="text-[10px] text-blue-400">Las celdas vacías indican valor cero.</span>
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div class="bg-slate-50 px-6 py-3 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider">Ejecución Presupuestaria</h3>
+                    <span class="text-[10px] font-medium text-slate-400">Solo se muestran montos mayores a cero.</span>
                 </div>
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-100 text-slate-500 text-[10px] uppercase font-bold">
+                
+                <table class="w-full text-sm border-collapse">
+                    <thead class="bg-white text-slate-400 text-[10px] uppercase font-bold tracking-wider border-b border-gray-100">
                         <tr>
-                            <th class="px-6 py-3 text-left w-8"></th>
-                            <th class="px-6 py-3 text-left">Concepto</th>
-                            <th class="px-4 py-3 text-right text-gray-400">Plan ₡</th>
-                            <th class="px-4 py-3 text-right text-slate-800">Ejecutado ₡</th>
-                            <th class="px-4 py-3 text-right text-gray-400">Plan $</th>
-                            <th class="px-4 py-3 text-right text-slate-800">Ejecutado $</th>
+                            <th class="px-6 py-4 text-left w-12"></th>
+                            <th class="px-6 py-4 text-left">Concepto</th>
+                            <th class="px-4 py-4 text-right text-gray-300">Plan ₡</th>
+                            <th class="px-4 py-4 text-right text-slate-800">Ejecutado ₡</th>
+                            <th class="px-4 py-4 text-right text-gray-300">Plan $</th>
+                            <th class="px-4 py-4 text-right text-slate-800">Ejecutado $</th>
                         </tr>
                     </thead>
                     <tbody id="table-body" class="text-slate-700"></tbody>
                 </table>
+            </div>
+            
+            <div class="text-center pb-8">
+                 <p class="text-[10px] font-bold text-gray-300 uppercase tracking-[0.2em]">Fin del Documento</p>
             </div>
         </div>
     </div>
@@ -196,11 +238,11 @@
                 if(!res.ok) res = await fetch(`./${name}?t=${Date.now()}`);
                 if(!res.ok) throw new Error();
                 const buf = await res.arrayBuffer();
-                processWorkbook(buf, name);
+                // Pequeño timeout para que se vea la animación de carga
+                setTimeout(() => processWorkbook(buf, name), 300);
             } catch(e) {
                 document.getElementById('status-msg').innerText = "⚠️ Archivo no encontrado. Intente carga manual.";
                 document.getElementById('sel-week').value = "";
-            } finally {
                 document.getElementById('loading-spinner').classList.add('hidden');
             }
         }
@@ -221,6 +263,7 @@
                 document.getElementById('screen-group').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
             } catch(e) { alert("Archivo inválido"); }
+            finally { document.getElementById('loading-spinner').classList.add('hidden'); }
         }
 
         function selectGroup(g) {
@@ -259,7 +302,7 @@
                 totals.crc += execCRC;
                 totals.usd += execUSD;
 
-                // Solo mostramos si hay algún valor > 0 en Plan o Ejecutado
+                // FILTRO DE CERO: Solo agregamos si hay algo que mostrar
                 if(execCRC > 0 || execUSD > 0 || initCRC > 0 || initUSD > 0) {
                     groups[cat].items.push({
                         idx: index,
@@ -276,9 +319,8 @@
 
         function renderDashboard() {
             const totals = calculateData();
-            // Función Helper para formatear (Solo si > 0)
+            // Helpers de Formato
             const fmt = (n,c) => n > 0 ? new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c}).format(n) : '';
-            // Función Helper para valores de Input (Solo si > 0)
             const val = (n) => n > 0 ? n : '';
 
             document.getElementById('bank-crc').innerText = totals.bkCRC > 0 ? new Intl.NumberFormat('es-CR',{style:'currency',currency:'CRC'}).format(totals.bkCRC) : '₡0';
@@ -297,37 +339,44 @@
                 const g = groups[k]; if(g.tC===0 && g.tU===0) return;
                 const rid = `g-${idx}`;
 
+                // SEPARADOR DE BLOQUES (Espacio en blanco)
+                const spacer = document.createElement('tr');
+                spacer.className = 'h-4 bg-transparent border-none';
+                tbody.appendChild(spacer);
+
+                // HEADER DE CATEGORÍA (Bloque Sólido)
                 const tr = document.createElement('tr');
                 tr.className = 'group-header';
                 tr.onclick = () => toggle(rid, tr);
                 tr.innerHTML = `
-                    <td class="px-6 py-4 text-center text-[10px] text-gray-400">▶</td>
-                    <td class="px-6 py-4 font-bold text-slate-700">${k}</td>
+                    <td class="px-6 py-4 text-center"><span id="icon-${rid}" class="text-xs text-slate-500 transition-transform duration-200 block icon-arrow">▶</span></td>
+                    <td class="px-6 py-4 font-bold uppercase tracking-wide text-xs">${k}</td>
                     <td class="px-4 py-4 text-right text-xs text-gray-400 font-mono"></td>
-                    <td class="px-4 py-4 text-right font-bold text-slate-800 font-mono">${fmt(g.tC,'CRC')}</td>
+                    <td class="px-4 py-4 text-right font-bold font-mono text-sm">${fmt(g.tC,'CRC')}</td>
                     <td class="px-4 py-4 text-right text-xs text-gray-400 font-mono"></td>
-                    <td class="px-4 py-4 text-right font-bold text-slate-800 font-mono">${fmt(g.tU,'USD')}</td>
+                    <td class="px-4 py-4 text-right font-bold font-mono text-sm">${fmt(g.tU,'USD')}</td>
                 `;
                 tbody.appendChild(tr);
 
+                // FILAS DE DETALLE
                 g.items.forEach(it => {
                     const sub = document.createElement('tr');
-                    sub.className = `hidden bg-gray-50 border-l-4 border-slate-800 ${rid}`;
+                    sub.className = `hidden detail-row ${rid}`;
                     
                     sub.innerHTML = `
                         <td></td>
-                        <td class="px-6 py-2 pl-8 text-xs text-slate-500 font-medium">${it.desc}</td>
+                        <td class="px-6 py-3 pl-8 text-xs font-medium text-slate-600">${it.desc}</td>
                         
-                        <td class="px-4 py-2 text-right text-[10px] text-gray-400 font-mono mt-1">${fmt(it.iC,'CRC')}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-3 text-right text-[10px] text-gray-400 font-mono mt-1">${fmt(it.iC,'CRC')}</td>
+                        <td class="px-4 py-3 text-right">
                             <input type="number" value="${val(it.eC)}" 
                                 onchange="updateValue(${it.idx}, 'Colones_Ejecutados', this.value)"
                                 class="input-edit ${it.isModC?'input-changed':''}" 
                                 placeholder="${val(it.iC)}">
                         </td>
 
-                        <td class="px-4 py-2 text-right text-[10px] text-gray-400 font-mono mt-1">${fmt(it.iU,'USD')}</td>
-                        <td class="px-4 py-2 text-right">
+                        <td class="px-4 py-3 text-right text-[10px] text-gray-400 font-mono mt-1">${fmt(it.iU,'USD')}</td>
+                        <td class="px-4 py-3 text-right">
                             <input type="number" value="${val(it.eU)}" 
                                 onchange="updateValue(${it.idx}, 'Dolares_Ejecutados', this.value)"
                                 class="input-edit ${it.isModU?'input-changed':''}" 
@@ -349,7 +398,7 @@
             const newSheet = XLSX.utils.json_to_sheet(rawData);
             globalWorkbook.Sheets[activeSheetName] = newSheet;
             XLSX.writeFile(globalWorkbook, `EDITADO_${loadedFileName}`);
-            alert("✅ Archivo guardado. Sube 'EDITADO_" + loadedFileName + "' a GitHub.");
+            alert("✅ Archivo guardado. \nSube 'EDITADO_" + loadedFileName + "' a la carpeta 'excels' en GitHub.");
         }
 
         function showScreen(id) {
