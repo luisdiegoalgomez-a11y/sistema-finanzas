@@ -16,16 +16,16 @@
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* === FONDOS CORPORATIVOS === */
+        /* Fondo Corporativo */
         .bg-corporate {
-            background-color: #0f172a; /* Slate 900 */
+            background-color: #0f172a;
             background-image: 
                 radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
                 radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
                 radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
         }
 
-        /* === TABLA COMPACTA === */
+        /* Tabla Compacta */
         .group-header { background-color: #e2e8f0; border-bottom: 1px solid #cbd5e1; cursor: pointer; height: 32px; transition: background 0.1s; }
         .group-header:hover { background-color: #cbd5e1; }
         .group-expanded { background-color: #1e293b !important; color: #ffffff !important; border-bottom: none; }
@@ -33,7 +33,7 @@
         .group-expanded .icon-arrow { transform: rotate(90deg); color: white; }
         .detail-row { background-color: #ffffff; border-left: 3px solid #1e293b; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; height: 28px; }
         
-        /* === INPUTS === */
+        /* Inputs */
         .input-edit { background: transparent; border: 1px solid transparent; border-radius: 2px; padding: 0 4px; width: 85px; text-align: right; font-family: 'JetBrains Mono'; font-size: 12px; color: #0f172a; height: 24px; }
         .input-edit:hover, .input-edit:focus { background: #f8fafc; border-color: #cbd5e1; outline: none; }
         .input-changed { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
@@ -47,19 +47,18 @@
 <body class="h-screen flex flex-col overflow-hidden">
 
     <div id="screen-loading" class="absolute inset-0 z-50 bg-corporate flex flex-col items-center justify-center p-6 text-white">
-        
         <div class="mb-8 text-center fade-in">
             <img src="logo-zasa.png" onerror="this.src='https://placehold.co/64x64?text=GZ'" class="w-20 h-20 mx-auto mb-4 object-contain bg-white rounded-xl p-2 shadow-2xl">
             <h1 class="text-3xl font-extrabold tracking-tight">Grupo ZASA</h1>
-            <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.3em] mt-1">Portal Financiero Corporativo</p>
+            <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.3em] mt-1">Portal Financiero</p>
         </div>
 
         <div class="w-full max-w-sm bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl p-8 shadow-2xl fade-in relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-
+            
             <div id="loader-overlay" class="hidden absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-20 backdrop-blur-sm">
                 <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400 mb-3"></div>
-                <span class="text-xs font-bold text-blue-200 tracking-wider">CONECTANDO A BASE DE DATOS...</span>
+                <span class="text-xs font-bold text-blue-200 tracking-wider">PROCESANDO...</span>
             </div>
 
             <div class="space-y-5">
@@ -73,33 +72,25 @@
                         <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">▼</div>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1 ml-1">Periodo Semanal</label>
                     <div class="relative">
-                        <select id="sel-week" onchange="loadFromCloud()" class="w-full bg-slate-800 border border-slate-600 text-white text-sm font-bold rounded-lg p-3 appearance-none focus:ring-2 focus:ring-blue-500 outline-none hover:bg-slate-700 cursor-pointer transition">
-                            </select>
+                        <select id="sel-week" onchange="loadFromCloud()" class="w-full bg-slate-800 border border-slate-600 text-white text-sm font-bold rounded-lg p-3 appearance-none focus:ring-2 focus:ring-blue-500 outline-none hover:bg-slate-700 cursor-pointer transition"></select>
                         <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-400">▼</div>
                     </div>
                 </div>
             </div>
-
             <p id="status-msg" class="text-[10px] font-bold text-red-300 mt-4 text-center min-h-[1rem]"></p>
-
             <div class="mt-6 pt-4 border-t border-white/10 text-center">
                 <label class="cursor-pointer text-[10px] text-slate-400 hover:text-white font-bold transition flex justify-center items-center gap-2 group">
-                    <span class="group-hover:scale-110 transition-transform">📂</span> 
-                    Modo Offline (Carga Manual)
+                    <span class="group-hover:scale-110 transition-transform">📂</span> Carga Manual
                     <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
                 </label>
             </div>
         </div>
-        
-        <p class="mt-8 text-[10px] text-slate-500 font-mono">v3.5.0 • Enterprise Edition</p>
     </div>
 
     <div id="screen-group" class="hidden absolute inset-0 z-40 bg-slate-50 flex items-center justify-center p-6">
-        
         <div class="absolute top-0 left-0 w-full p-6 flex justify-between items-center">
             <div class="flex items-center gap-3">
                 <img src="logo-zasa.png" class="w-8 h-8 object-contain">
@@ -109,55 +100,37 @@
                     <p id="group-file-name" class="text-sm font-black text-slate-800 leading-none">--</p>
                 </div>
             </div>
-            <button onclick="location.reload()" class="text-xs font-bold text-slate-500 hover:text-red-600 transition flex items-center gap-1">
-                <span>✕</span> Cerrar Sesión
-            </button>
+            <button onclick="location.reload()" class="text-xs font-bold text-slate-500 hover:text-red-600 transition flex items-center gap-1">✕ Cerrar</button>
         </div>
 
         <div class="w-full max-w-5xl">
             <h2 class="text-3xl font-black text-slate-800 text-center mb-2 tracking-tight">Unidades de Negocio</h2>
-            <p class="text-center text-slate-500 font-medium mb-12">Seleccione el módulo operativo para visualizar el presupuesto.</p>
+            <p class="text-center text-slate-500 font-medium mb-12">Seleccione el módulo operativo.</p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
-                
                 <div onclick="selectGroup('villas')" class="group relative bg-white h-64 rounded-2xl shadow-lg border border-slate-200 cursor-pointer overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                     <div class="absolute top-0 left-0 w-full h-1 bg-blue-600"></div>
-                    <div class="absolute -right-6 -bottom-6 text-slate-50 opacity-50 group-hover:opacity-100 group-hover:text-blue-50 transition-all duration-500 transform group-hover:scale-110">
-                        <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    </div>
-                    
                     <div class="p-8 h-full flex flex-col justify-between relative z-10">
                         <div>
                             <span class="inline-block bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wider">División Logística</span>
                             <h3 class="text-2xl font-black text-slate-800 group-hover:text-blue-700 transition-colors">Grupo Villas</h3>
                             <p class="text-xs font-bold text-slate-400 uppercase mt-1 tracking-widest">Maquinaria & Transporte</p>
                         </div>
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 group-hover:text-blue-600 transition-colors">
-                            <span>Ingresar al Módulo</span>
-                            <span>→</span>
-                        </div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 group-hover:text-blue-600 transition-colors"><span>Ingresar</span><span>→</span></div>
                     </div>
                 </div>
 
                 <div onclick="selectGroup('pina')" class="group relative bg-white h-64 rounded-2xl shadow-lg border border-slate-200 cursor-pointer overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                     <div class="absolute top-0 left-0 w-full h-1 bg-yellow-500"></div>
-                    <div class="absolute -right-6 -bottom-6 text-slate-50 opacity-50 group-hover:opacity-100 group-hover:text-yellow-50 transition-all duration-500 transform group-hover:scale-110">
-                        <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1v2a9 9 0 0 1 9 9h2a11 11 0 0 0-11-11zm-5 4V3a9 9 0 0 0-9 9h2a7 7 0 0 1 7-7zm12 12a7 7 0 0 1-7 7v2a9 9 0 0 0 9-9h-2zm-12 0H5a9 9 0 0 0 9 9v-2a7 7 0 0 1-7-7z"></path></svg>
-                    </div>
-                    
                     <div class="p-8 h-full flex flex-col justify-between relative z-10">
                         <div>
                             <span class="inline-block bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wider">División Agrícola</span>
                             <h3 class="text-2xl font-black text-slate-800 group-hover:text-yellow-700 transition-colors">Grupo Piña</h3>
                             <p class="text-xs font-bold text-slate-400 uppercase mt-1 tracking-widest">Producción & Exportación</p>
                         </div>
-                        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 group-hover:text-yellow-600 transition-colors">
-                            <span>Ingresar al Módulo</span>
-                            <span>→</span>
-                        </div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 group-hover:text-yellow-600 transition-colors"><span>Ingresar</span><span>→</span></div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -170,56 +143,77 @@
                 </button>
                 <div class="h-4 w-px bg-gray-200"></div>
                 <div class="flex flex-col">
-                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Vista Actual</span>
+                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Módulo</span>
                     <h2 id="dash-title" class="text-sm font-black text-slate-800 uppercase leading-none">--</h2>
                 </div>
             </div>
             
-            <div class="flex items-center gap-6">
-                <div class="text-right">
-                    <span class="text-slate-400 font-bold uppercase text-[9px] block">Total Ejecutado ₡</span>
-                    <span id="head-total-crc" class="font-bold text-slate-800 font-mono text-sm">₡0</span>
-                </div>
-                <div class="text-right border-l border-gray-200 pl-6">
-                    <span class="text-slate-400 font-bold uppercase text-[9px] block">Total Ejecutado $</span>
-                    <span id="head-total-usd" class="font-bold text-slate-800 font-mono text-sm">$0.00</span>
-                </div>
-                
-                <button onclick="saveExcel()" class="hidden ml-4 text-[10px] font-bold text-white bg-slate-900 hover:bg-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transition transform active:scale-95" id="btn-save">
-                    💾 GUARDAR CAMBIOS
-                </button>
-            </div>
+            <button onclick="saveExcel()" class="hidden text-[10px] font-bold text-white bg-slate-900 hover:bg-black flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg transition transform active:scale-95" id="btn-save">
+                💾 GUARDAR CAMBIOS
+            </button>
         </div>
 
         <div class="flex-1 overflow-auto p-4 max-w-6xl mx-auto w-full space-y-4 custom-scroll">
+            
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white rounded-lg border border-gray-200 px-5 py-3 flex justify-between items-center shadow-sm border-b-4 border-emerald-500 relative overflow-hidden">
-                    <div class="relative z-10">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tesorería Colones</p>
-                        <p id="bank-crc" class="text-2xl font-bold font-mono text-slate-800">₡0</p>
+                
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="bg-slate-50 px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Flujo en Colones</span>
+                        <span class="text-xs font-black text-slate-300">CRC</span>
                     </div>
-                    <div class="text-emerald-50 text-5xl font-black absolute -right-2 -bottom-4 z-0">₡</div>
-                </div>
-                <div class="bg-white rounded-lg border border-gray-200 px-5 py-3 flex justify-between items-center shadow-sm border-b-4 border-blue-500 relative overflow-hidden">
-                    <div class="relative z-10">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Tesorería Dólares</p>
-                        <p id="bank-usd" class="text-2xl font-bold font-mono text-slate-800">$0</p>
+                    <div class="p-4 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">Bancos (Saldo)</span>
+                            <span id="calc-bank-crc" class="font-mono text-slate-700">₡0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">(-) Gastos Ejecutados</span>
+                            <span id="calc-exp-crc" class="font-mono text-red-500">₡0</span>
+                        </div>
+                        <div class="border-t border-slate-200 my-2"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-800 text-xs uppercase">Restante Neto</span>
+                            <span id="calc-net-crc" class="font-mono text-xl font-black text-slate-800">₡0</span>
+                        </div>
                     </div>
-                    <div class="text-blue-50 text-5xl font-black absolute -right-2 -bottom-4 z-0">$</div>
                 </div>
+
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden">
+                    <div class="bg-slate-50 px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Flujo en Dólares</span>
+                        <span class="text-xs font-black text-slate-300">USD</span>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">Bancos (Saldo)</span>
+                            <span id="calc-bank-usd" class="font-mono text-slate-700">$0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-slate-500">(-) Gastos Ejecutados</span>
+                            <span id="calc-exp-usd" class="font-mono text-red-500">$0.00</span>
+                        </div>
+                        <div class="border-t border-slate-200 my-2"></div>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-800 text-xs uppercase">Restante Neto</span>
+                            <span id="calc-net-usd" class="font-mono text-xl font-black text-slate-800">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm mt-4">
                 <div class="bg-slate-50 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
-                    <h3 class="text-[10px] font-black text-slate-700 uppercase tracking-wider">Desglose Operativo</h3>
-                    <span class="text-[9px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded border border-slate-200">Solo montos activos</span>
+                    <h3 class="text-[10px] font-black text-slate-700 uppercase tracking-wider">Desglose de Partidas</h3>
+                    <span class="text-[9px] font-bold text-slate-400">Edición en tiempo real</span>
                 </div>
                 
                 <table class="w-full text-xs border-collapse">
                     <thead class="bg-white text-slate-400 text-[9px] uppercase font-bold tracking-wider border-b border-gray-100">
                         <tr>
                             <th class="px-3 py-2 text-left w-8"></th>
-                            <th class="px-3 py-2 text-left">Partida / Concepto</th>
+                            <th class="px-3 py-2 text-left">Concepto</th>
                             <th class="px-2 py-2 text-right text-gray-300">Plan ₡</th>
                             <th class="px-2 py-2 text-right text-slate-800">Ejecutado ₡</th>
                             <th class="px-2 py-2 text-right text-gray-300">Plan $</th>
@@ -269,7 +263,6 @@
                 if(!res.ok) res = await fetch(`./${name}?t=${Date.now()}`);
                 if(!res.ok) throw new Error();
                 const buf = await res.arrayBuffer();
-                // Simular un momento de carga para UX
                 setTimeout(() => processWorkbook(buf, name), 600);
             } catch(e) {
                 document.getElementById('status-msg').innerText = "⚠️ Error: Archivo no encontrado en el servidor.";
@@ -290,12 +283,9 @@
                 globalWorkbook = XLSX.read(data, {type:'array'});
                 loadedFileName = name;
                 document.getElementById('group-file-name').innerText = name;
-                
-                // Transición suave
                 document.getElementById('screen-loading').classList.add('hidden');
                 document.getElementById('loader-overlay').classList.add('hidden');
                 document.getElementById('screen-group').classList.remove('hidden');
-                
                 document.getElementById('btn-save').classList.remove('hidden');
             } catch(e) { alert("Archivo inválido o corrupto."); }
         }
@@ -353,15 +343,34 @@
         function renderDashboard() {
             const totals = calculateData();
             const fmt = (n,c) => n > 0 ? new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n) : '';
+            const fmtFull = (n,c) => new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n);
             const val = (n) => n > 0 ? n : '';
 
-            document.getElementById('bank-crc').innerText = totals.bkCRC > 0 ? new Intl.NumberFormat('es-CR',{style:'currency',currency:'CRC', maximumFractionDigits:0}).format(totals.bkCRC) : '₡0';
-            document.getElementById('bank-usd').innerText = totals.bkUSD > 0 ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(totals.bkUSD) : '$0.00';
-            ['head-total-crc'].forEach(i => document.getElementById(i).innerText = totals.crc > 0 ? new Intl.NumberFormat('es-CR',{style:'currency',currency:'CRC', maximumFractionDigits:0}).format(totals.crc) : '₡0');
-            ['head-total-usd'].forEach(i => document.getElementById(i).innerText = totals.usd > 0 ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(totals.usd) : '$0.00');
-
-            const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
+            // --- LÓGICA DE CALCULADORA DE LIQUIDEZ ---
             
+            // 1. Colones
+            const netCRC = totals.bkCRC - totals.crc;
+            document.getElementById('calc-bank-crc').innerText = fmtFull(totals.bkCRC, 'CRC');
+            document.getElementById('calc-exp-crc').innerText = fmtFull(totals.crc, 'CRC');
+            const elNetCRC = document.getElementById('calc-net-crc');
+            elNetCRC.innerText = fmtFull(netCRC, 'CRC');
+            elNetCRC.className = netCRC >= 0 
+                ? 'font-mono text-xl font-black text-emerald-600' // Verde si sobra
+                : 'font-mono text-xl font-black text-red-600';    // Rojo si falta
+
+            // 2. Dólares
+            const netUSD = totals.bkUSD - totals.usd;
+            document.getElementById('calc-bank-usd').innerText = fmtFull(totals.bkUSD, 'USD');
+            document.getElementById('calc-exp-usd').innerText = fmtFull(totals.usd, 'USD');
+            const elNetUSD = document.getElementById('calc-net-usd');
+            elNetUSD.innerText = fmtFull(netUSD, 'USD');
+            elNetUSD.className = netUSD >= 0 
+                ? 'font-mono text-xl font-black text-blue-600' // Azul/Verde si sobra
+                : 'font-mono text-xl font-black text-red-600'; // Rojo si falta
+
+
+            // Render Tabla
+            const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
             let keys = Object.keys(groups).sort((a,b) => {
                 const iA = currentOrder.indexOf(a), iB = currentOrder.indexOf(b);
                 if(iA!==-1 && iB!==-1) return iA-iB; if(iA!==-1) return -1; if(iB!==-1) return 1; return a.localeCompare(b);
@@ -370,11 +379,7 @@
             keys.forEach((k, idx) => {
                 const g = groups[k]; if(g.tC===0 && g.tU===0) return;
                 const rid = `g-${idx}`;
-
-                // Spacer reducido
-                const spacer = document.createElement('tr');
-                spacer.className = 'h-1 bg-transparent border-none';
-                tbody.appendChild(spacer);
+                const spacer = document.createElement('tr'); spacer.className = 'h-1 bg-transparent border-none'; tbody.appendChild(spacer);
 
                 const tr = document.createElement('tr');
                 tr.className = 'group-header';
