@@ -3,252 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enterprise Financial Dashboard</title>
+    <title>Reporte Ejecutivo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'], // Fuente para números
-                    },
-                    colors: {
-                        slate: { 850: '#1e293b', 900: '#0f172a' } // Colores corporativos oscuros
-                    }
-                }
-            }
-        }
-    </script>
-
     <style>
-        /* Utilidades Base */
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #334155; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
         .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Estilos de Tabla Compacta */
+        .group-header { 
+            background-color: #ffffff; 
+            border-bottom: 1px solid #e2e8f0; 
+            transition: all 0.2s;
+        }
+        .group-header:hover { background-color: #f1f5f9; cursor: pointer; }
         
-        /* Tabla Empresarial */
-        .table-row-group { border-bottom: 1px solid #e2e8f0; transition: background 0.1s; }
-        .table-row-group:hover { background-color: #f8fafc; cursor: pointer; }
-        .row-expanded { background-color: #f1f5f9; border-left: 3px solid #3b82f6; }
+        /* Cuando está expandido */
+        .group-expanded { 
+            background-color: #f8fafc; 
+            border-left: 4px solid #3b82f6; /* Línea Azul indicadora */
+        }
         
-        /* Scrollbar Fina */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        /* Filas de detalle */
+        .detail-row { 
+            background-color: #f8fafc; 
+            font-size: 0.85rem;
+            border-left: 4px solid #3b82f6; /* Continuación de la línea azul */
+        }
+        
+        /* Scroll fino */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-gray-50 text-slate-800 h-screen flex overflow-hidden font-sans">
+<body class="h-screen flex flex-col overflow-hidden">
 
-    <aside class="w-64 bg-slate-900 text-white flex-col hidden md:flex shadow-2xl z-20">
-        <div class="h-16 flex items-center px-6 border-b border-slate-800">
-            <div class="font-bold text-lg tracking-wider flex items-center gap-2">
-                <span class="text-blue-500">❖</span> FINANZAS
+    <header class="bg-white border-b border-gray-200 h-14 flex items-center justify-between px-6 shadow-sm z-20 flex-none">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 text-slate-800 font-bold tracking-tight">
+                <span class="bg-slate-800 text-white w-6 h-6 flex items-center justify-center rounded text-xs">F</span>
+                <span>FINANZAS CORPORATIVAS</span>
+            </div>
+            <div class="h-4 w-px bg-gray-300 mx-2"></div>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="text-slate-400 font-semibold uppercase">PERIODO:</span>
+                <span id="header-week" class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold uppercase">--</span>
             </div>
         </div>
         
-        <div class="flex-1 py-6 px-3 space-y-1">
-            <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Módulos</p>
-            
-            <button onclick="location.reload()" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md bg-slate-800 text-blue-400">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
-                Cargar Archivo
+        <div class="flex gap-3">
+            <button onclick="location.reload()" class="text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border border-gray-200 transition">
+                <span>📂</span> Cambiar Archivo
+            </button>
+            <button id="btn-back" onclick="showScreen('screen-group')" class="hidden text-xs font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded border border-gray-200 transition">
+                <span>🏢</span> Cambiar Empresa
+            </button>
+        </div>
+    </header>
+
+    <div id="screen-loading" class="absolute inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-200">
+            <h2 class="text-lg font-bold text-slate-800 mb-1">Cargar Reporte</h2>
+            <p class="text-xs text-slate-500 mb-6">Selecciona el año y semana para consultar.</p>
+
+            <div class="flex gap-3 mb-4">
+                <div class="w-1/3">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Año</label>
+                    <select id="sel-year" class="w-full bg-slate-50 border border-slate-300 rounded text-sm font-semibold p-2 outline-none focus:border-blue-500"><option value="2026">2026</option></select>
+                </div>
+                <div class="w-2/3">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Semana</label>
+                    <select id="sel-week" class="w-full bg-slate-50 border border-slate-300 rounded text-sm font-semibold p-2 outline-none focus:border-blue-500"></select>
+                </div>
+            </div>
+
+            <button onclick="loadFromCloud()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded shadow transition text-sm flex justify-center items-center gap-2 mb-4">
+                Consultar Reporte
             </button>
             
-            <div id="nav-company" class="hidden">
-                <button onclick="showScreen('screen-group')" class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    Seleccionar Empresa
-                </button>
-                <button class="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md text-slate-400 hover:text-white hover:bg-slate-800 transition mt-1">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Dashboard
-                </button>
-            </div>
-        </div>
-
-        <div class="p-4 border-t border-slate-800">
-            <div class="flex items-center gap-3">
-                <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">JD</div>
-                <div>
-                    <p class="text-sm font-medium">Usuario</p>
-                    <p class="text-xs text-slate-500">Admin</p>
-                </div>
-            </div>
-        </div>
-    </aside>
-
-    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-        
-        <div id="screen-loading" class="absolute inset-0 z-50 bg-gray-50 flex flex-col items-center justify-center p-6 fade-in">
-            <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center">
-                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6 shadow-sm">
-                    📂
-                </div>
-                <h1 class="text-xl font-bold text-slate-800">Acceso a Reportes</h1>
-                <p class="text-sm text-slate-500 mb-8">Selecciona el periodo fiscal para consultar.</p>
-
-                <div class="grid grid-cols-3 gap-3 mb-6">
-                    <div class="col-span-1">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">AÑO</label>
-                        <select id="sel-year" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-blue-500">
-                            <option value="2025">2025</option>
-                            <option value="2026" selected>2026</option>
-                            <option value="2027">2027</option>
-                        </select>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-semibold text-slate-500 mb-1">PERIODO</label>
-                        <select id="sel-week" class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"></select>
-                    </div>
-                </div>
-
-                <button onclick="loadFromCloud()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-lg shadow-md transition flex justify-center items-center gap-2 text-sm">
-                    <span>Consultar Datos</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
-                <p id="status-msg" class="text-xs text-red-500 mt-4 h-4 font-medium"></p>
-            </div>
-            
-            <div class="mt-8">
-                <label class="cursor-pointer text-xs text-slate-400 hover:text-slate-600 transition flex items-center gap-1">
+            <div class="border-t border-gray-100 pt-4 text-center">
+                <label class="cursor-pointer text-xs text-blue-600 hover:underline font-medium">
+                    o cargar archivo local (.xlsx)
                     <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls">
-                    <span>Cargar archivo local (Respaldo)</span>
                 </label>
             </div>
+            <p id="status-msg" class="text-center text-[10px] text-red-500 mt-2 h-3"></p>
         </div>
+    </div>
 
-        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 shadow-sm flex-none">
-            <div class="flex items-center gap-4">
-                <h2 id="page-title" class="text-lg font-bold text-slate-800">Resumen Financiero</h2>
-                <div class="h-4 w-px bg-gray-300"></div>
-                <span id="dash-week-label" class="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded uppercase tracking-wide">--</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span class="text-xs font-medium text-slate-500">Conectado</span>
-            </div>
-        </header>
-
-        <div id="screen-group" class="hidden flex-1 p-8 bg-gray-50 overflow-auto items-center justify-center flex">
-            <div class="w-full max-w-5xl">
-                <h3 class="text-xl font-bold text-slate-800 mb-6">Unidades de Negocio</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div onclick="selectGroup('villas')" class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-500 cursor-pointer transition-all duration-200">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-3 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            </div>
-                            <span class="text-xs font-bold text-gray-400 uppercase">Inmobiliaria</span>
-                        </div>
-                        <h4 class="text-lg font-bold text-slate-800">Grupo Villas</h4>
-                        <p class="text-sm text-slate-500 mt-1">Gestión administrativa y mantenimiento.</p>
+    <div id="screen-group" class="hidden flex-1 bg-gray-50 flex items-center justify-center p-4">
+        <div class="w-full max-w-4xl">
+            <h2 class="text-center text-xl font-bold text-slate-800 mb-8">Seleccionar Unidad de Negocio</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-8">
+                <div onclick="selectGroup('villas')" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:border-blue-500 hover:shadow-md transition group">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-bold text-slate-700 group-hover:text-blue-600">Grupo Villas</h3>
+                        <span class="bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Inmobiliaria</span>
                     </div>
-
-                    <div onclick="selectGroup('pina')" class="group bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-yellow-500 cursor-pointer transition-all duration-200">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="p-3 bg-yellow-50 rounded-lg text-yellow-600 group-hover:bg-yellow-500 group-hover:text-white transition">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <span class="text-xs font-bold text-gray-400 uppercase">Agroindustria</span>
-                        </div>
-                        <h4 class="text-lg font-bold text-slate-800">Grupo Piña</h4>
-                        <p class="text-sm text-slate-500 mt-1">Producción, exportación y planilla agrícola.</p>
+                    <p class="text-xs text-slate-400">Ver reporte de gastos operativos y administrativos.</p>
+                </div>
+                <div onclick="selectGroup('pina')" class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:border-yellow-500 hover:shadow-md transition group">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-lg font-bold text-slate-700 group-hover:text-yellow-600">Grupo Piña</h3>
+                        <span class="bg-yellow-50 text-yellow-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Agroindustria</span>
                     </div>
+                    <p class="text-xs text-slate-400">Ver reporte de costos de producción y finca.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="screen-dashboard" class="hidden flex-1 flex flex-col overflow-hidden bg-white relative">
+        
+        <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex justify-between items-center flex-none">
+            <h2 id="dash-title" class="text-base font-bold text-slate-800 uppercase tracking-tight">--</h2>
+            <div class="flex gap-6 text-xs">
+                <div>
+                    <span class="text-slate-400 font-medium uppercase mr-2">Total Colones:</span>
+                    <span id="head-total-crc" class="font-bold text-slate-700 font-mono">₡0</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 font-medium uppercase mr-2">Total Dólares:</span>
+                    <span id="head-total-usd" class="font-bold text-slate-700 font-mono">$0.00</span>
                 </div>
             </div>
         </div>
 
-        <div id="screen-dashboard" class="hidden flex-1 overflow-auto bg-gray-50 flex flex-col">
+        <div class="flex-1 overflow-auto p-6 max-w-7xl mx-auto w-full space-y-6">
             
-            <div class="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 sticky top-0 z-10">
-                <button onclick="showScreen('screen-group')" class="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center gap-1">
-                    ← <span class="hidden md:inline">Volver a Empresas</span>
-                </button>
-                <div class="h-4 w-px bg-gray-300"></div>
-                <h2 id="dash-title" class="text-sm font-bold text-slate-800 uppercase tracking-wide">--</h2>
-            </div>
-
-            <div class="p-6 max-w-7xl mx-auto w-full space-y-6">
-
-                <div>
-                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 ml-1">Posición de Caja</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center relative overflow-hidden">
-                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
-                            <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase">Banco Colones</p>
-                                <p id="bank-crc" class="text-2xl font-bold font-mono text-slate-800 mt-1 tracking-tight">₡0</p>
-                            </div>
-                            <div class="h-10 w-10 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 font-bold">₡</div>
-                        </div>
-                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center relative overflow-hidden">
-                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                            <div>
-                                <p class="text-xs font-semibold text-slate-400 uppercase">Banco Dólares</p>
-                                <p id="bank-usd" class="text-2xl font-bold font-mono text-slate-800 mt-1 tracking-tight">$0.00</p>
-                            </div>
-                            <div class="h-10 w-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 font-bold">$</div>
-                        </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white rounded border border-gray-200 p-4 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Disponibilidad Colones</p>
+                        <p id="bank-crc" class="text-xl font-bold text-emerald-700 font-mono mt-0.5">₡0</p>
                     </div>
+                    <div class="text-emerald-100 text-3xl opacity-50">₡</div>
                 </div>
-
-                <div>
-                    <div class="flex items-end justify-between mb-3 px-1">
-                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Ejecución de Gastos</h3>
+                <div class="bg-white rounded border border-gray-200 p-4 flex items-center justify-between shadow-sm">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Disponibilidad Dólares</p>
+                        <p id="bank-usd" class="text-xl font-bold text-blue-700 font-mono mt-0.5">$0.00</p>
                     </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div class="bg-slate-800 text-white p-4 rounded-lg shadow-sm flex justify-between items-center">
-                            <span class="text-xs font-medium text-slate-400 uppercase">Total Egresos ₡</span>
-                            <span id="expense-total-crc" class="text-lg font-bold font-mono">₡0</span>
-                        </div>
-                        <div class="bg-slate-800 text-white p-4 rounded-lg shadow-sm flex justify-between items-center">
-                            <span class="text-xs font-medium text-slate-400 uppercase">Total Egresos $</span>
-                            <span id="expense-total-usd" class="text-lg font-bold font-mono">$0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left">
-                                <thead class="bg-gray-50 border-b border-gray-200 text-xs text-slate-500 uppercase font-semibold">
-                                    <tr>
-                                        <th class="px-4 py-3 w-10"></th>
-                                        <th class="px-4 py-3">Concepto / Partida</th>
-                                        <th class="px-4 py-3 text-right">Egresos ₡</th>
-                                        <th class="px-4 py-3 text-right">Egresos $</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table-body" class="divide-y divide-gray-100 text-slate-700">
-                                    </tbody>
-                                <tfoot class="bg-gray-50 border-t border-gray-200 font-bold text-slate-800">
-                                    <tr>
-                                        <td colspan="2" class="px-4 py-3 text-right text-xs uppercase">Totales Finales:</td>
-                                        <td id="footer-crc" class="px-4 py-3 text-right font-mono">₡0</td>
-                                        <td id="footer-usd" class="px-4 py-3 text-right font-mono">$0.00</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
+                    <div class="text-blue-100 text-3xl opacity-50">$</div>
                 </div>
             </div>
+
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <div class="bg-gray-100 px-4 py-2 border-b border-gray-200 flex justify-between items-center">
+                    <h3 class="text-xs font-bold text-slate-600 uppercase">Detalle de Egresos</h3>
+                </div>
+                
+                <table class="w-full text-sm">
+                    <thead class="bg-gray-50 text-slate-500 text-[10px] uppercase font-semibold">
+                        <tr>
+                            <th class="px-4 py-2 text-left w-8"></th> <th class="px-4 py-2 text-left w-1/2">Categoría / Partida</th>
+                            <th class="px-4 py-2 text-right">Monto (₡)</th>
+                            <th class="px-4 py-2 text-right">Monto ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="text-slate-700">
+                        </tbody>
+                    <tfoot class="bg-slate-50 border-t-2 border-slate-200 font-bold text-slate-800 text-xs">
+                        <tr>
+                            <td colspan="2" class="px-4 py-3 text-right uppercase tracking-wide">Total Egresos:</td>
+                            <td id="foot-total-crc" class="px-4 py-3 text-right font-mono text-sm">₡0</td>
+                            <td id="foot-total-usd" class="px-4 py-3 text-right font-mono text-sm">$0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <p class="text-center text-[10px] text-gray-400 mt-4">Fin del Reporte</p>
         </div>
-
-    </main>
+    </div>
 
     <script>
-        // CONFIGURACIÓN DE LISTAS
+        // === CONFIGURACIÓN ===
         const ORDER_PINA = ["Mano Obra Finca","Mano Obra Terceros (Contratista)","Planillas y Cargas Sociales","Servicios Gerencia","Vacaciones y Liquidación","Ret. CCSS Empleado","CCSS","Caja Chica","Aguinaldos","Liquidaciones de personal","Maquila","Pagos Municipales","Servicios Públicos","Canon Pozos","Pensión","Transporte de Fruta ¢","Transporte de Fruta $ (Villas)","Insumos Agrícolas $","Combustible","Alquiler","Taller Materiales e Insumos","Costos de Cartón - Etiquetas","Gastos Indirectos ¢","Gastos Indirectos $","Proveedores Crédito ¢","Proveedores Crédito $","Viabilidades Ambientales","Operación ¢","Operación $","INS","Compra Fruta","Banco Pichincha","Gastos Indirectos Julesyor","Tramites de Exportaciones $","Tramites de Exportaciones ¢","Trasportes Alquilados $"];
         const ORDER_VILLAS = ["Mano de Obra","Servicios Públicos","Mantenimiento","Proveedores","Caja Chica","Impuestos","Seguridad","Jardinería","Alquileres"];
 
         let dataVillas=[], dataPina=[], currentData=[], currentOrder=[], loadedWeek="--";
 
+        // === INICIO ===
         window.onload = () => {
             const selWeek = document.getElementById('sel-week');
             for(let i=1; i<=53; i++) {
@@ -260,152 +202,169 @@
             }
         };
 
+        // === CARGA ===
         async function loadFromCloud() {
-            const year = document.getElementById('sel-year').value;
-            const week = document.getElementById('sel-week').value;
+            const y = document.getElementById('sel-year').value;
+            const w = document.getElementById('sel-week').value;
             const btn = document.querySelector('#screen-loading button');
             const msg = document.getElementById('status-msg');
-
-            const fileName = `Semana_${year}_${week}.xlsx`;
-            const filePath = `./excels/${fileName}`;
-
-            btn.disabled = true; btn.innerHTML = `<span class="animate-pulse">Conectando...</span>`; msg.innerText = "";
+            
+            const name = `Semana_${y}_${w}.xlsx`;
+            
+            btn.innerHTML = `<span class="animate-pulse">Buscando...</span>`; btn.disabled=true; msg.innerText="";
 
             try {
-                let response = await fetch(filePath + '?t=' + Date.now());
-                if (!response.ok) response = await fetch(`./${fileName}?t=` + Date.now()); // Intento raiz
-                if (!response.ok) throw new Error("404");
-
-                const buffer = await response.arrayBuffer();
-                processWorkbook(buffer, `S${week} - ${year}`);
-            } catch (error) {
-                msg.innerText = `Error: Archivo no encontrado (${fileName})`;
+                let res = await fetch(`./excels/${name}?t=`+Date.now());
+                if(!res.ok) res = await fetch(`./${name}?t=`+Date.now());
+                if(!res.ok) throw new Error();
+                
+                const buf = await res.arrayBuffer();
+                processWorkbook(buf, `SEM ${w} - ${y}`);
+            } catch(e) {
+                msg.innerText = `Error: No se encontró "${name}"`;
             } finally {
-                btn.disabled = false; btn.innerHTML = `<span>Consultar Datos</span> <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>`;
+                btn.innerHTML = "Consultar Reporte"; btn.disabled=false;
             }
         }
 
         document.getElementById('file-input').addEventListener('change', (e) => {
-            const file = e.target.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => processWorkbook(new Uint8Array(ev.target.result), file.name);
-            reader.readAsArrayBuffer(file);
+            const f = e.target.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (ev) => processWorkbook(new Uint8Array(ev.target.result), f.name);
+            r.readAsArrayBuffer(f);
         });
 
         function processWorkbook(data, label) {
             try {
                 const wb = XLSX.read(data, {type:'array'});
-                if(wb.SheetNames.length < 2) { alert("Formato incorrecto: Se requieren hojas 'Villas' y 'Pina'"); return; }
+                if(wb.SheetNames.length<2) { alert("El Excel requiere hojas 'Villas' y 'Pina'"); return; }
                 
                 dataVillas = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
                 dataPina = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[1]]);
                 
                 loadedWeek = label;
-                document.getElementById('dash-week-label').innerText = loadedWeek;
-                // Mostrar barra lateral
-                document.getElementById('nav-company').classList.remove('hidden');
+                document.getElementById('header-week').innerText = label;
                 
-                showScreen('screen-group');
-            } catch(e) { alert("Archivo dañado o inválido"); }
+                document.getElementById('screen-loading').classList.add('hidden');
+                document.getElementById('screen-group').classList.remove('hidden');
+            } catch(e) { alert("Archivo Inválido"); }
         }
 
-        function showScreen(id){
-            ['screen-loading','screen-group','screen-dashboard'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+        // === NAVEGACIÓN ===
+        function showScreen(id) {
+            ['screen-group','screen-dashboard'].forEach(s => document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
             document.getElementById(id).classList.add('fade-in');
+            
+            const btnBack = document.getElementById('btn-back');
+            if(id === 'screen-dashboard') btnBack.classList.remove('hidden');
+            else btnBack.classList.add('hidden');
         }
 
-        function selectGroup(g){
-            if(g==='villas'){currentData=dataVillas; currentOrder=ORDER_VILLAS; document.getElementById('dash-title').innerText="GRUPO VILLAS";}
-            else{currentData=dataPina; currentOrder=ORDER_PINA; document.getElementById('dash-title').innerText="GRUPO PIÑA";}
+        function selectGroup(g) {
+            if(g==='villas') { currentData=dataVillas; currentOrder=ORDER_VILLAS; document.getElementById('dash-title').innerText="GRUPO VILLAS"; }
+            else { currentData=dataPina; currentOrder=ORDER_PINA; document.getElementById('dash-title').innerText="GRUPO PIÑA"; }
             renderDashboard();
             showScreen('screen-dashboard');
         }
 
-        function renderDashboard(){
+        // === RENDERIZADO ===
+        function renderDashboard() {
             const groups={}; 
-            let totalExpenseCRC=0, totalExpenseUSD=0, bankCRC=0, bankUSD=0;
-            const fmtCRC = new Intl.NumberFormat('es-CR', {style:'currency', currency:'CRC', maximumFractionDigits:0});
-            const fmtUSD = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:2});
+            let expCRC=0, expUSD=0, bkCRC=0, bkUSD=0;
+            const fmt = (n, cur) => new Intl.NumberFormat(cur==='CRC'?'es-CR':'en-US', {style:'currency', currency:cur}).format(n);
 
-            currentData.forEach(row=>{
-                const cat = (row.Categoria||row.Concepto||"Varios").trim();
-                const catUpper = cat.toUpperCase();
-                const crc = typeof row.Colones==='number'?row.Colones:parseFloat((row.Colones||"0").toString().replace(/[^0-9.-]+/g,""))||0;
-                const usd = typeof row.Dolares==='number'?row.Dolares:parseFloat((row.Dolares||"0").toString().replace(/[^0-9.-]+/g,""))||0;
+            currentData.forEach(r => {
+                const cat = (r.Categoria||r.Concepto||"Varios").trim();
+                const clean = (v) => typeof v==='number' ? v : parseFloat((v||"0").toString().replace(/[^0-9.-]+/g,""))||0;
+                const crc = clean(r.Colones), usd = clean(r.Dolares);
                 
-                if(catUpper.includes('BANCOS') || catUpper.includes('SALDO')) { bankCRC+=crc; bankUSD+=usd; return; }
+                if(cat.toUpperCase().includes('BANCOS') || cat.toUpperCase().includes('SALDO')) {
+                    bkCRC+=crc; bkUSD+=usd; return;
+                }
 
-                if(!groups[cat]) groups[cat]={tCRC:0, tUSD:0, items:[]};
-                groups[cat].tCRC+=crc; groups[cat].tUSD+=usd;
-                totalExpenseCRC+=crc; totalExpenseUSD+=usd;
-                if(crc>0||usd>0) groups[cat].items.push({f:row.Fecha, c:row.Concepto, cr:crc, us:usd});
+                if(!groups[cat]) groups[cat] = {c:0, u:0, items:[]};
+                groups[cat].c += crc; groups[cat].u += usd;
+                expCRC += crc; expUSD += usd;
+                if(crc>0||usd>0) groups[cat].items.push({d:r.Concepto, f:r.Fecha, c:crc, u:usd});
             });
 
-            document.getElementById('bank-crc').innerText=fmtCRC.format(bankCRC);
-            document.getElementById('bank-usd').innerText=fmtUSD.format(bankUSD);
-            const txtCRC=fmtCRC.format(totalExpenseCRC), txtUSD=fmtUSD.format(totalExpenseUSD);
-            ['expense-total-crc','footer-crc'].forEach(id=>document.getElementById(id).innerText=txtCRC);
-            ['expense-total-usd','footer-usd'].forEach(id=>document.getElementById(id).innerText=txtUSD);
+            // Actualizar KPIs
+            document.getElementById('bank-crc').innerText = fmt(bkCRC, 'CRC');
+            document.getElementById('bank-usd').innerText = fmt(bkUSD, 'USD');
+            
+            const tC = fmt(expCRC, 'CRC'), tU = fmt(expUSD, 'USD');
+            ['head-total-crc','foot-total-crc'].forEach(i => document.getElementById(i).innerText=tC);
+            ['head-total-usd','foot-total-usd'].forEach(i => document.getElementById(i).innerText=tU);
 
-            let keys = Object.keys(groups).sort((a,b)=>{
+            // Ordenar
+            let keys = Object.keys(groups).sort((a,b) => {
                 const iA = currentOrder.indexOf(a), iB = currentOrder.indexOf(b);
                 if(iA!==-1 && iB!==-1) return iA-iB; if(iA!==-1) return -1; if(iB!==-1) return 1; return a.localeCompare(b);
             });
 
             const tbody = document.getElementById('table-body'); tbody.innerHTML='';
-            keys.forEach((cat,idx)=>{
-                const g=groups[cat]; if(g.tCRC===0 && g.tUSD===0) return;
-                const rid=`r${idx}`; const row=document.createElement('tr'); row.className='table-row-group group'; row.onclick=()=>toggle(rid, row);
+            
+            keys.forEach((k, idx) => {
+                const g = groups[k]; if(g.c===0 && g.u===0) return;
+                const rid = `row-${idx}`;
                 
-                const styleCRC=g.tCRC>0?'text-slate-800 font-bold':'text-slate-300 font-light';
-                const styleUSD=g.tUSD>0?'text-slate-800 font-bold':'text-slate-300 font-light';
+                // FILA PADRE
+                const tr = document.createElement('tr');
+                tr.className = 'group-header';
+                tr.onclick = () => toggle(rid, tr);
                 
-                row.innerHTML=`
-                    <td class="px-4 py-4 text-center text-gray-400 text-[10px]"><span id="i${rid}" class="transition-transform duration-200 block">▶</span></td>
-                    <td class="px-4 py-4 font-semibold text-slate-700">${cat}</td>
-                    <td class="px-4 py-4 text-right font-mono text-sm ${styleCRC}">${g.tCRC>0?fmtCRC.format(g.tCRC):'-'}</td>
-                    <td class="px-4 py-4 text-right font-mono text-sm ${styleUSD}">${g.tUSD>0?fmtUSD.format(g.tUSD):'-'}</td>
-                `;
-                tbody.appendChild(row);
+                // Estilo condicional para números (gris si es 0, negro si hay valor)
+                const sC = g.c>0 ? 'text-slate-800 font-bold' : 'text-gray-300 font-light';
+                const sU = g.u>0 ? 'text-slate-800 font-bold' : 'text-gray-300 font-light';
 
-                g.items.forEach(it=>{
-                    const sub=document.createElement('tr'); sub.className=`hidden ${rid} bg-gray-50 border-b border-gray-100`;
-                    let d=it.f; if(typeof d==='number') d=new Date((d-(25567+2))*86400000).toLocaleDateString('es-CR'); else if(typeof d==='string'&&d.includes('T')) d=d.split('T')[0];
-                    sub.innerHTML=`
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-center"><span id="icon-${rid}" class="text-[10px] text-gray-400 transition-transform duration-200 block">▶</span></td>
+                    <td class="px-4 py-3 font-semibold text-slate-700">${k}</td>
+                    <td class="px-4 py-3 text-right font-mono ${sC}">${g.c>0?fmt(g.c,'CRC'):'-'}</td>
+                    <td class="px-4 py-3 text-right font-mono ${sU}">${g.u>0?fmt(g.u,'USD'):'-'}</td>
+                `;
+                tbody.appendChild(tr);
+
+                // FILAS HIJAS
+                g.items.forEach(it => {
+                    const sub = document.createElement('tr');
+                    sub.className = `hidden detail-row ${rid}`;
+                    
+                    let date = it.f;
+                    if(typeof date==='number') date = new Date((date-(25567+2))*86400000).toLocaleDateString('es-CR');
+                    else if(typeof date==='string' && date.includes('T')) date = date.split('T')[0];
+
+                    sub.innerHTML = `
                         <td></td>
-                        <td class="px-4 py-2 pl-8 flex items-center gap-3 border-l-2 border-blue-100">
-                            ${d?`<span class="text-[10px] bg-white border border-gray-200 px-1.5 py-0.5 rounded text-gray-400 font-mono">${d}</span>`:''}
-                            <span class="text-xs text-slate-500 truncate">${it.c||'Detalle'}</span>
+                        <td class="px-4 py-2 pl-6 flex items-center gap-3">
+                            ${date ? `<span class="bg-white border border-gray-200 px-1 py-0.5 rounded text-[9px] text-gray-400 font-mono">${date}</span>` : ''}
+                            <span class="truncate text-slate-500">${it.d||'Detalle'}</span>
                         </td>
-                        <td class="px-4 py-2 text-right font-mono text-xs text-slate-500">${it.cr>0?fmtCRC.format(it.cr):'-'}</td>
-                        <td class="px-4 py-2 text-right font-mono text-xs text-slate-500">${it.us>0?fmtUSD.format(it.us):'-'}</td>
+                        <td class="px-4 py-2 text-right font-mono text-xs text-slate-500">${it.c>0?fmt(it.c,'CRC'):'-'}</td>
+                        <td class="px-4 py-2 text-right font-mono text-xs text-slate-500">${it.u>0?fmt(it.u,'USD'):'-'}</td>
                     `;
                     tbody.appendChild(sub);
                 });
             });
-            if(tbody.innerHTML==='') tbody.innerHTML='<tr><td colspan="4" class="p-8 text-center text-slate-400 text-sm">No hay movimientos registrados para este periodo.</td></tr>';
+            
+            if(!tbody.innerHTML) tbody.innerHTML='<tr><td colspan="4" class="p-8 text-center text-gray-400 text-xs">No hay datos para mostrar</td></tr>';
         }
 
-        function toggle(id, rowEl){
-            const rows=document.querySelectorAll(`.${id}`); 
-            const icon=document.getElementById(`i${id}`);
-            let hidden=true;
+        function toggle(id, el) {
+            const rows = document.querySelectorAll(`.${id}`);
+            const icon = document.getElementById(`icon-${id}`);
+            const isExpanded = el.classList.contains('group-expanded');
             
-            // Toggle visual state
-            if(rowEl.classList.contains('row-expanded')) {
-                rowEl.classList.remove('row-expanded');
+            if(isExpanded) {
+                el.classList.remove('group-expanded');
                 icon.style.transform = 'rotate(0deg)';
+                rows.forEach(r => r.classList.add('hidden'));
             } else {
-                rowEl.classList.add('row-expanded');
+                el.classList.add('group-expanded');
                 icon.style.transform = 'rotate(90deg)';
-                hidden = false;
+                rows.forEach(r => r.classList.remove('hidden'));
             }
-
-            rows.forEach(r=>{
-                if(hidden) r.classList.add('hidden');
-                else r.classList.remove('hidden');
-            });
         }
     </script>
 </body>
