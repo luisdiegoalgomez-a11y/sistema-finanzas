@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grupo ZASA - Tesorería Final</title>
+    <title>Grupo ZASA - Edición Fluida</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
-        /* === ESTILOS GLOBALES === */
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; font-size: 13px; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .hidden { display: none !important; }
         .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Fondo Corporativo */
         .bg-corporate {
             background-color: #0f172a;
             background-image: 
@@ -25,15 +23,15 @@
                 radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
         }
 
-        /* Tabla Compacta */
         .group-header { background-color: #e2e8f0; border-bottom: 1px solid #cbd5e1; cursor: pointer; height: 32px; transition: background 0.1s; }
         .group-header:hover { background-color: #cbd5e1; }
+        /* Estilos para cuando está expandido */
         .group-expanded { background-color: #1e293b !important; color: #ffffff !important; border-bottom: none; }
         .group-expanded td { color: white !important; }
         .group-expanded .icon-arrow { transform: rotate(90deg); color: white; }
+        
         .detail-row { background-color: #ffffff; border-left: 3px solid #1e293b; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; height: 28px; }
         
-        /* Inputs */
         .input-edit { background: transparent; border: 1px solid transparent; border-radius: 2px; padding: 0 4px; width: 85px; text-align: right; font-family: 'JetBrains Mono'; font-size: 12px; color: #0f172a; height: 24px; }
         .input-edit:hover, .input-edit:focus { background: #f8fafc; border-color: #cbd5e1; outline: none; }
         .input-changed { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
@@ -45,7 +43,6 @@
         }
         .input-tc:focus { border-color: #3b82f6; background: white; outline: none; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
 
-        /* Scroll */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -62,12 +59,10 @@
 
         <div class="w-full max-w-sm bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl p-8 shadow-2xl fade-in relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-            
             <div id="loader-overlay" class="hidden absolute inset-0 bg-slate-900/90 flex flex-col items-center justify-center z-20 backdrop-blur-sm">
                 <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400 mb-3"></div>
                 <span class="text-xs font-bold text-blue-200 tracking-wider">PROCESANDO...</span>
             </div>
-
             <div class="space-y-5">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-300 uppercase mb-1 ml-1">Ejercicio Fiscal</label>
@@ -107,9 +102,7 @@
                     <p id="group-file-name" class="text-sm font-black text-slate-800 leading-none">--</p>
                 </div>
             </div>
-            <button onclick="location.reload()" class="text-xs font-bold text-slate-500 hover:text-red-600 transition flex items-center gap-1">
-                ✕ Cerrar Sesión (Borra Cambios)
-            </button>
+            <button onclick="location.reload()" class="text-xs font-bold text-slate-500 hover:text-red-600 transition flex items-center gap-1">✕ Cerrar Sesión</button>
         </div>
 
         <div class="w-full max-w-5xl">
@@ -175,7 +168,8 @@
                             <span class="text-white font-bold text-xs tracking-wide">FLUJO EN COLONES</span>
                             <span class="text-white font-black text-xs">₡</span>
                         </div>
-                        <div class="p-3 space-y-1"> <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                        <div class="p-3 space-y-1">
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-1">
                                 <span class="text-xs font-semibold text-slate-500">Saldo en Bancos</span>
                                 <span id="calc-bank-crc" class="font-mono text-sm font-bold text-slate-700">₡0</span>
                             </div>
@@ -204,7 +198,8 @@
                             <span class="text-white font-bold text-xs tracking-wide">FLUJO EN DÓLARES</span>
                             <span class="text-white font-black text-xs">$</span>
                         </div>
-                        <div class="p-3 space-y-1"> <div class="flex justify-between items-center border-b border-gray-100 pb-1">
+                        <div class="p-3 space-y-1">
+                            <div class="flex justify-between items-center border-b border-gray-100 pb-1">
                                 <span class="text-xs font-semibold text-slate-500">Saldo en Bancos</span>
                                 <span id="calc-bank-usd" class="font-mono text-sm font-bold text-slate-700">$0.00</span>
                             </div>
@@ -250,7 +245,6 @@
                         <tbody id="table-body" class="text-slate-700"></tbody>
                     </table>
                 </div>
-                
                 <div class="text-center py-4">
                     <p class="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Sistema Financiero Grupo ZASA</p>
                 </div>
@@ -268,6 +262,9 @@
         let globalDataPina = null;
         let currentView = "";
         let loadedFileName = "";
+        
+        // VARIABLE NUEVA PARA RECORDAR EL GRUPO ABIERTO
+        let expandedGroup = null;
 
         window.onload = () => {
             const s = document.getElementById('sel-week');
@@ -293,7 +290,7 @@
                 const buf = await res.arrayBuffer();
                 setTimeout(() => processWorkbook(buf, name), 600);
             } catch(e) {
-                document.getElementById('status-msg').innerText = "⚠️ Error: Archivo no encontrado en el servidor.";
+                document.getElementById('status-msg').innerText = "⚠️ Error: Archivo no encontrado.";
                 document.getElementById('sel-week').value = "";
                 document.getElementById('loader-overlay').classList.add('hidden');
             }
@@ -322,16 +319,15 @@
 
         function selectGroup(g) {
             currentView = g;
-            if(g==='villas') { 
-                document.getElementById('dash-title').innerText = "GRUPO VILLAS";
-            } else {
-                document.getElementById('dash-title').innerText = "GRUPO PIÑA";
-            }
+            if(g==='villas') document.getElementById('dash-title').innerText = "GRUPO VILLAS";
+            else document.getElementById('dash-title').innerText = "GRUPO PIÑA";
+            
+            // Al cambiar de vista, reseteamos el grupo expandido para que no se abra uno incorrecto
+            expandedGroup = null; 
             renderDashboard();
             showScreen('screen-dashboard');
         }
 
-        // Función Limpieza NaN
         function parseMoney(val) {
             if (val === undefined || val === null || val === "") return 0;
             if (typeof val === 'number') return val;
@@ -382,17 +378,16 @@
             const fmtFull = (n,c) => new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n);
             const val = (n) => n > 0 ? n : '';
 
-            // --- LÓGICA DE TESORERÍA ---
-            
-            // 1. Colones (Real)
+            // --- LÓGICA TESORERÍA ---
             const netCRC = totals.bkCRC - totals.crc;
             document.getElementById('calc-bank-crc').innerText = fmtFull(totals.bkCRC, 'CRC');
             document.getElementById('calc-exp-crc').innerText = fmtFull(totals.crc, 'CRC');
+            
             const elNetCRC = document.getElementById('calc-net-crc');
             elNetCRC.innerText = fmtFull(netCRC, 'CRC');
-            elNetCRC.className = netCRC >= 0 ? 'font-mono text-xl font-black text-slate-800' : 'font-mono text-xl font-black text-red-600';
+            elNetCRC.className = netCRC >= 0 ? 'font-mono text-xl font-black text-emerald-600' : 'font-mono text-xl font-black text-red-600';
 
-            // Alerta de Déficit
+            // Alerta Déficit
             const deficitBox = document.getElementById('crc-deficit-alert');
             const exchangeRate = parseFloat(document.getElementById('input-exchange-rate').value) || 0;
             let dollarsNeeded = 0;
@@ -405,11 +400,10 @@
                 deficitBox.classList.add('hidden');
             }
 
-            // 2. Dólares (RESTA LA VENTA DE DIVISAS)
+            // Dólares
             document.getElementById('calc-bank-usd').innerText = fmtFull(totals.bkUSD, 'USD');
             document.getElementById('calc-exp-usd').innerText = fmtFull(totals.usd, 'USD');
             
-            // Línea de Cobertura
             const rowFX = document.getElementById('row-fx-cover');
             if (dollarsNeeded > 0) {
                 rowFX.classList.remove('hidden');
@@ -418,13 +412,10 @@
                 rowFX.classList.add('hidden');
             }
 
-            // Calculo Final USD (AQUÍ ESTÁ LA RESTA QUE PEDISTE)
             const netUSD = totals.bkUSD - totals.usd - dollarsNeeded;
             const elNetUSD = document.getElementById('calc-net-usd');
             elNetUSD.innerText = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(netUSD);
-            // Si el resultado es positivo (o cero) -> Negro (Slate-800)
-            // Si es negativo -> Rojo
-            elNetUSD.className = netUSD >= 0 ? 'font-mono text-xl font-black text-slate-800' : 'font-mono text-xl font-black text-red-600';
+            elNetUSD.className = netUSD >= 0 ? 'font-mono text-xl font-black text-blue-600' : 'font-mono text-xl font-black text-red-600';
 
             // --- TABLA DETALLE ---
             const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
@@ -446,10 +437,14 @@
                 const spacer = document.createElement('tr'); spacer.className = 'h-1 bg-transparent border-none'; tbody.appendChild(spacer);
 
                 const tr = document.createElement('tr');
-                tr.className = 'group-header';
-                tr.onclick = () => toggle(rid, tr);
+                // LÓGICA DE MEMORIA DE EXPANSIÓN
+                const isExpanded = (expandedGroup === rid);
+                
+                tr.className = isExpanded ? 'group-header group-expanded' : 'group-header';
+                tr.onclick = () => toggle(rid);
+                
                 tr.innerHTML = `
-                    <td class="px-6 text-center"><span id="icon-${rid}" class="text-[9px] text-slate-500 transition-transform duration-200 block icon-arrow">▶</span></td>
+                    <td class="px-6 text-center"><span id="icon-${rid}" class="text-[9px] text-slate-500 transition-transform duration-200 block icon-arrow" style="${isExpanded ? 'transform: rotate(90deg); color: white;' : ''}">▶</span></td>
                     <td class="px-6 font-bold uppercase tracking-wide text-[10px]">${k}</td>
                     <td class="px-4 text-right text-[10px] text-gray-400 font-mono"></td>
                     <td class="px-4 text-right font-bold font-mono text-xs">${fmt(g.tC,'CRC')}</td>
@@ -460,7 +455,9 @@
 
                 g.items.forEach(it => {
                     const sub = document.createElement('tr');
-                    sub.className = `hidden detail-row ${rid}`;
+                    // Si está expandido, se muestra. Si no, hidden.
+                    sub.className = isExpanded ? `detail-row ${rid}` : `hidden detail-row ${rid}`;
+                    
                     sub.innerHTML = `
                         <td></td>
                         <td class="px-6 pl-8 text-[11px] font-medium text-slate-600 truncate max-w-[200px]" title="${it.desc}">${it.desc}</td>
@@ -494,11 +491,15 @@
             ['screen-group','screen-dashboard'].forEach(s=>document.getElementById(s).classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
         }
-        function toggle(id, el) {
-            const rows = document.querySelectorAll(`.${id}`);
-            const isExp = el.classList.contains('group-expanded');
-            if(isExp) { el.classList.remove('group-expanded'); rows.forEach(r=>r.classList.add('hidden')); }
-            else { el.classList.add('group-expanded'); rows.forEach(r=>r.classList.remove('hidden')); }
+        
+        // TOGGLE SIMPLIFICADO QUE SOLO ACTUALIZA ESTADO
+        function toggle(id) {
+            if (expandedGroup === id) {
+                expandedGroup = null; // Cerrar si ya estaba abierto
+            } else {
+                expandedGroup = id; // Abrir nuevo
+            }
+            renderDashboard(); // Re-renderizar todo para aplicar estado
         }
     </script>
 </body>
