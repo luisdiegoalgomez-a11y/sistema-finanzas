@@ -390,7 +390,7 @@
             document.getElementById('calc-exp-crc').innerText = fmtFull(totals.crc, 'CRC');
             const elNetCRC = document.getElementById('calc-net-crc');
             elNetCRC.innerText = fmtFull(netCRC, 'CRC');
-            elNetCRC.className = netCRC >= 0 ? 'font-mono text-xl font-black text-emerald-600' : 'font-mono text-xl font-black text-red-600';
+            elNetCRC.className = netCRC >= 0 ? 'font-mono text-xl font-black text-slate-800' : 'font-mono text-xl font-black text-red-600';
 
             // Alerta de Déficit
             const deficitBox = document.getElementById('crc-deficit-alert');
@@ -405,15 +405,10 @@
                 deficitBox.classList.add('hidden');
             }
 
-            // 2. Dólares (SIN RESTAR AUTOMÁTICAMENTE)
-            const netUSD = totals.bkUSD - totals.usd;
+            // 2. Dólares (RESTA LA VENTA DE DIVISAS)
             document.getElementById('calc-bank-usd').innerText = fmtFull(totals.bkUSD, 'USD');
             document.getElementById('calc-exp-usd').innerText = fmtFull(totals.usd, 'USD');
             
-            const elNetUSD = document.getElementById('calc-net-usd');
-            elNetUSD.innerText = fmtFull(netUSD, 'USD');
-            elNetUSD.className = netUSD >= 0 ? 'font-mono text-xl font-black text-blue-600' : 'font-mono text-xl font-black text-red-600';
-
             // Línea de Cobertura
             const rowFX = document.getElementById('row-fx-cover');
             if (dollarsNeeded > 0) {
@@ -423,7 +418,15 @@
                 rowFX.classList.add('hidden');
             }
 
-            // Render Tabla
+            // Calculo Final USD (AQUÍ ESTÁ LA RESTA QUE PEDISTE)
+            const netUSD = totals.bkUSD - totals.usd - dollarsNeeded;
+            const elNetUSD = document.getElementById('calc-net-usd');
+            elNetUSD.innerText = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(netUSD);
+            // Si el resultado es positivo (o cero) -> Negro (Slate-800)
+            // Si es negativo -> Rojo
+            elNetUSD.className = netUSD >= 0 ? 'font-mono text-xl font-black text-slate-800' : 'font-mono text-xl font-black text-red-600';
+
+            // --- TABLA DETALLE ---
             const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
             renderRows(groups, tbody, val);
         }
