@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grupo ZASA - Edición Avanzada</title>
+    <title>Grupo ZASA - Edición Formateada</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -30,25 +30,23 @@
         .group-expanded .icon-arrow { transform: rotate(90deg); color: white; }
         .detail-row { background-color: #ffffff; border-left: 3px solid #1e293b; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; height: 28px; }
         
-        /* Inputs Generales */
-        .input-edit { background: transparent; border: 1px solid transparent; border-radius: 2px; padding: 0 4px; width: 85px; text-align: right; font-family: 'JetBrains Mono'; font-size: 12px; color: #0f172a; height: 24px; }
+        /* Inputs Generales (Ahora type text) */
+        .input-edit { background: transparent; border: 1px solid transparent; border-radius: 2px; padding: 0 4px; width: 95px; text-align: right; font-family: 'JetBrains Mono'; font-size: 12px; color: #0f172a; height: 24px; }
         .input-edit:hover, .input-edit:focus { background: #f8fafc; border-color: #cbd5e1; outline: none; }
         .input-changed { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
         
-        /* Inputs de CABECERA (Los nuevos) */
+        /* Inputs de CABECERA */
         .input-header { 
             background: transparent; border: 1px solid transparent; border-radius: 4px; 
-            width: 90px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 12px;
+            width: 95px; text-align: right; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 12px;
             color: #334155; height: 26px; transition: all 0.2s;
         }
         .input-header:focus { background: white; border-color: #94a3b8; outline: none; color: #0f172a; }
-        /* Cuando el grupo está expandido (fondo oscuro), el texto debe ser blanco */
         .group-expanded .input-header { color: #ffffff; }
-        .group-expanded .input-header:focus { color: #0f172a; } /* Al escribir vuelve a negro */
+        .group-expanded .input-header:focus { color: #0f172a; }
 
-        /* Estilo cuando hay Override (Manual) */
         .input-override {
-            background-color: #fef9c3 !important; /* Amarillo claro */
+            background-color: #fef9c3 !important;
             border: 1px solid #eab308 !important;
             color: #854d0e !important;
             box-shadow: 0 0 0 1px rgba(234, 179, 8, 0.2);
@@ -63,7 +61,6 @@
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -125,7 +122,7 @@
 
         <div class="w-full max-w-5xl">
             <h2 class="text-3xl font-black text-slate-800 text-center mb-2 tracking-tight">Unidades de Negocio</h2>
-            <p class="text-center text-slate-500 font-medium mb-12">Seleccione el módulo operativo.</p>
+            <p class="text-center text-slate-500 font-medium mb-12">Los cambios se mantienen hasta cerrar sesión.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 px-4">
                 <div onclick="selectGroup('villas')" class="group relative bg-white h-64 rounded-2xl shadow-lg border border-slate-200 cursor-pointer overflow-hidden hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
                     <div class="absolute top-0 left-0 w-full h-1 bg-blue-600"></div>
@@ -281,9 +278,6 @@
         let currentView = "";
         let loadedFileName = "";
         let expandedGroup = null;
-        
-        // --- NUEVO: ALMACÉN DE SOBREESCRITURA DE GRUPOS (MANUALES) ---
-        // Estructura: { villas: { "Mano de Obra": { c: 1500, u: 0 } }, pina: {} }
         let groupOverrides = { villas: {}, pina: {} };
 
         window.onload = () => {
@@ -299,10 +293,8 @@
             if(!w) return;
             const y = document.getElementById('sel-year').value;
             const name = `Semana_${y}_${w}.xlsx`;
-            
             document.getElementById('loader-overlay').classList.remove('hidden');
             document.getElementById('status-msg').innerText = "";
-
             try {
                 let res = await fetch(`./excels/${name}?t=${Date.now()}`);
                 if(!res.ok) res = await fetch(`./${name}?t=${Date.now()}`);
@@ -329,10 +321,7 @@
                 loadedFileName = name;
                 globalDataVillas = XLSX.utils.sheet_to_json(globalWorkbook.Sheets[globalWorkbook.SheetNames[0]]);
                 globalDataPina = XLSX.utils.sheet_to_json(globalWorkbook.Sheets[globalWorkbook.SheetNames[1]]);
-                
-                // Reset overrides on new load
-                groupOverrides = { villas: {}, pina: {} };
-
+                groupOverrides = { villas: {}, pina: {} }; // Reset overrides
                 document.getElementById('group-file-name').innerText = name;
                 document.getElementById('screen-loading').classList.add('hidden');
                 document.getElementById('loader-overlay').classList.add('hidden');
@@ -358,13 +347,24 @@
             return isNaN(num) ? 0 : num;
         }
 
+        // --- FORMATO CON ESPACIOS ---
+        function formatInput(val) {
+            if (!val && val !== 0) return "";
+            // Formato es-CR usa espacios para miles (ej: 1 000 000)
+            return new Intl.NumberFormat('es-CR', {maximumFractionDigits: 2}).format(val);
+        }
+
+        function cleanInput(val) {
+            // Remueve todo lo que no sea número, punto o negativo
+            return val.replace(/[^0-9.-]/g, '');
+        }
+
         function calculateData() {
             const rawData = currentView === 'villas' ? globalDataVillas : globalDataPina;
             const currentOverrides = groupOverrides[currentView] || {};
             const groups = {};
             let totals = { crc:0, usd:0, bkCRC:0, bkUSD:0 };
 
-            // 1. Calcular Suma Natural (Hijos)
             rawData.forEach((row, index) => {
                 const cat = (row.Categoria||row.Concepto||"Varios").trim();
                 const initCRC = parseMoney(row.Colones);
@@ -377,10 +377,7 @@
                 }
 
                 if(!groups[cat]) groups[cat] = { tC:0, tU:0, items:[], manualC: null, manualU: null };
-                
-                // Sumar hijos siempre para mostrarlos si se quiere
-                groups[cat].tC += execCRC; 
-                groups[cat].tU += execUSD;
+                groups[cat].tC += execCRC; groups[cat].tU += execUSD;
 
                 if(execCRC > 0 || execUSD > 0 || initCRC > 0 || initUSD > 0) {
                     groups[cat].items.push({
@@ -394,53 +391,31 @@
                 }
             });
 
-            // 2. Aplicar Overrides (Manuales)
+            // Apply Overrides
             let finalExpCRC = 0;
             let finalExpUSD = 0;
-
             for (const key in groups) {
-                // Revisar si hay override para esta categoría
                 if (currentOverrides[key]) {
-                    // Si existe override C, usarlo. Si no, usar suma hijos.
                     const ovC = currentOverrides[key].c;
                     const ovU = currentOverrides[key].u;
-
-                    if (ovC !== null) {
-                        groups[key].manualC = ovC;
-                        finalExpCRC += ovC; // Usar manual para total global
-                    } else {
-                        finalExpCRC += groups[key].tC; // Usar suma hijos
-                    }
-
-                    if (ovU !== null) {
-                        groups[key].manualU = ovU;
-                        finalExpUSD += ovU;
-                    } else {
-                        finalExpUSD += groups[key].tU;
-                    }
+                    if (ovC !== null) { groups[key].manualC = ovC; finalExpCRC += ovC; } else { finalExpCRC += groups[key].tC; }
+                    if (ovU !== null) { groups[key].manualU = ovU; finalExpUSD += ovU; } else { finalExpUSD += groups[key].tU; }
                 } else {
-                    // No hay override, sumar normal
                     finalExpCRC += groups[key].tC;
                     finalExpUSD += groups[key].tU;
                 }
             }
-
-            totals.crc = finalExpCRC;
-            totals.usd = finalExpUSD;
-
+            totals.crc = finalExpCRC; totals.usd = finalExpUSD;
             return { groups, totals };
         }
 
         function renderDashboard() {
             const { groups, totals } = calculateData();
             const fmtFull = (n,c) => new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n);
-            const val = (n) => n > 0 ? n : '';
 
-            // --- LÓGICA TESORERÍA ---
             const netCRC = totals.bkCRC - totals.crc;
             document.getElementById('calc-bank-crc').innerText = fmtFull(totals.bkCRC, 'CRC');
             document.getElementById('calc-exp-crc').innerText = fmtFull(totals.crc, 'CRC');
-            
             const elNetCRC = document.getElementById('calc-net-crc');
             elNetCRC.innerText = fmtFull(netCRC, 'CRC');
             elNetCRC.className = netCRC >= 0 ? 'font-mono text-xl font-black text-emerald-600' : 'font-mono text-xl font-black text-red-600';
@@ -457,7 +432,6 @@
                 deficitBox.classList.add('hidden');
             }
 
-            // Dólares
             document.getElementById('calc-bank-usd').innerText = fmtFull(totals.bkUSD, 'USD');
             document.getElementById('calc-exp-usd').innerText = fmtFull(totals.usd, 'USD');
             
@@ -474,12 +448,11 @@
             elNetUSD.innerText = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(netUSD);
             elNetUSD.className = netUSD >= 0 ? 'font-mono text-xl font-black text-blue-600' : 'font-mono text-xl font-black text-red-600';
 
-            // --- TABLA ---
             const tbody = document.getElementById('table-body'); tbody.innerHTML = '';
-            renderRows(groups, tbody, val);
+            renderRows(groups, tbody);
         }
 
-        function renderRows(groups, tbody, val) {
+        function renderRows(groups, tbody) {
             const fmt = (n,c) => n > 0 ? new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n) : '';
             const currentOrder = currentView === 'villas' ? ORDER_VILLAS : ORDER_PINA;
             
@@ -496,17 +469,8 @@
                 const tr = document.createElement('tr');
                 const isExpanded = (expandedGroup === rid);
                 tr.className = isExpanded ? 'group-header group-expanded' : 'group-header';
-                
-                // Click en TR expande, pero click en INPUT no debe expandir (stopPropagation)
-                tr.onclick = (e) => { 
-                    if(e.target.tagName !== 'INPUT') toggle(rid); 
-                };
+                tr.onclick = (e) => { if(e.target.tagName !== 'INPUT') toggle(rid); };
 
-                // Valores a mostrar en cabecera: Manual si existe, sino Suma Automática
-                const showC = g.manualC !== null ? g.manualC : g.tC;
-                const showU = g.manualU !== null ? g.manualU : g.tU;
-                
-                // Clases visuales si es manual
                 const styleManualC = g.manualC !== null ? 'input-override' : '';
                 const styleManualU = g.manualU !== null ? 'input-override' : '';
 
@@ -515,19 +479,22 @@
                     <td class="px-6 font-bold uppercase tracking-wide text-[10px]">${k}</td>
                     <td class="px-4 text-right text-[10px] text-gray-400 font-mono"></td>
                     <td class="px-4 text-right">
-                        <input type="number" 
-                            class="input-header ${styleManualC}" 
-                            value="${g.manualC !== null ? g.manualC : (g.tC > 0 ? g.tC : '')}" 
-                            placeholder="${g.tC > 0 ? g.tC : '-'}"
-                            onchange="updateGroupOverride('${k}', 'c', this.value)"
-                            onclick="event.stopPropagation()"> </td>
+                        <input type="text" class="input-header ${styleManualC}" 
+                            value="${formatInput(g.manualC !== null ? g.manualC : (g.tC > 0 ? g.tC : ''))}" 
+                            placeholder="${g.tC > 0 ? formatInput(g.tC) : '-'}"
+                            onfocus="this.value = cleanInput(this.value)"
+                            onblur="this.value = formatInput(parseMoney(this.value))"
+                            onchange="updateGroupOverride('${k}', 'c', cleanInput(this.value))"
+                            onclick="event.stopPropagation()">
+                    </td>
                     <td class="px-4 text-right text-[10px] text-gray-400 font-mono"></td>
                     <td class="px-4 text-right">
-                        <input type="number" 
-                            class="input-header ${styleManualU}" 
-                            value="${g.manualU !== null ? g.manualU : (g.tU > 0 ? g.tU : '')}" 
-                            placeholder="${g.tU > 0 ? g.tU : '-'}"
-                            onchange="updateGroupOverride('${k}', 'u', this.value)"
+                        <input type="text" class="input-header ${styleManualU}" 
+                            value="${formatInput(g.manualU !== null ? g.manualU : (g.tU > 0 ? g.tU : ''))}" 
+                            placeholder="${g.tU > 0 ? formatInput(g.tU) : '-'}"
+                            onfocus="this.value = cleanInput(this.value)"
+                            onblur="this.value = formatInput(parseMoney(this.value))"
+                            onchange="updateGroupOverride('${k}', 'u', cleanInput(this.value))"
                             onclick="event.stopPropagation()">
                     </td>
                 `;
@@ -540,28 +507,33 @@
                         <td></td>
                         <td class="px-6 pl-8 text-[11px] font-medium text-slate-600 truncate max-w-[200px]" title="${it.desc}">${it.desc}</td>
                         <td class="px-4 text-right text-[9px] text-gray-400 font-mono">${fmt(it.iC,'CRC')}</td>
-                        <td class="px-4 text-right"><input type="number" value="${val(it.eC)}" onchange="updateValue(${it.idx}, 'Colones_Ejecutados', this.value)" class="input-edit ${it.isModC?'input-changed':''}" placeholder="${val(it.iC)}"></td>
+                        <td class="px-4 text-right">
+                            <input type="text" class="input-edit ${it.isModC?'input-changed':''}" 
+                                value="${formatInput(it.eC)}" 
+                                placeholder="${formatInput(it.iC)}"
+                                onfocus="this.value = cleanInput(this.value)"
+                                onblur="this.value = formatInput(parseMoney(this.value))"
+                                onchange="updateValue(${it.idx}, 'Colones_Ejecutados', cleanInput(this.value))">
+                        </td>
                         <td class="px-4 text-right text-[9px] text-gray-400 font-mono">${fmt(it.iU,'USD')}</td>
-                        <td class="px-4 text-right"><input type="number" value="${val(it.eU)}" onchange="updateValue(${it.idx}, 'Dolares_Ejecutados', this.value)" class="input-edit ${it.isModU?'input-changed':''}" placeholder="${val(it.iU)}"></td>
+                        <td class="px-4 text-right">
+                            <input type="text" class="input-edit ${it.isModU?'input-changed':''}" 
+                                value="${formatInput(it.eU)}" 
+                                placeholder="${formatInput(it.iU)}"
+                                onfocus="this.value = cleanInput(this.value)"
+                                onblur="this.value = formatInput(parseMoney(this.value))"
+                                onchange="updateValue(${it.idx}, 'Dolares_Ejecutados', cleanInput(this.value))">
+                        </td>
                     `;
                     tbody.appendChild(sub);
                 });
             });
         }
 
-        // NUEVA FUNCIÓN: Actualizar Override de Grupo
         function updateGroupOverride(category, currency, val) {
-            if (!groupOverrides[currentView][category]) {
-                groupOverrides[currentView][category] = { c: null, u: null };
-            }
-
-            if (val === "") {
-                // Si borran, volvemos a automático (null)
-                groupOverrides[currentView][category][currency] = null;
-            } else {
-                // Si escriben, forzamos valor manual
-                groupOverrides[currentView][category][currency] = parseFloat(val);
-            }
+            if (!groupOverrides[currentView][category]) { groupOverrides[currentView][category] = { c: null, u: null }; }
+            if (val === "") { groupOverrides[currentView][category][currency] = null; } 
+            else { groupOverrides[currentView][category][currency] = parseFloat(val); }
             renderDashboard();
         }
 
@@ -586,8 +558,7 @@
             document.getElementById(id).classList.remove('hidden');
         }
         function toggle(id) {
-            if (expandedGroup === id) expandedGroup = null;
-            else expandedGroup = id;
+            if (expandedGroup === id) expandedGroup = null; else expandedGroup = id;
             renderDashboard();
         }
     </script>
