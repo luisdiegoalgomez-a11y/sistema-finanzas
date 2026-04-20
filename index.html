@@ -145,6 +145,7 @@
                         <div>
                             <span class="inline-block bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wider">División Logística</span>
                             <h3 class="text-2xl font-black text-slate-800 group-hover:text-blue-700 transition-colors">Grupo Villas</h3>
+                            <p class="text-xs font-bold text-slate-400 uppercase mt-1 tracking-widest">Maquinaria & Transporte</p>
                         </div>
                         <div class="flex items-center gap-2 text-xs font-bold text-slate-500 group-hover:text-blue-600 transition-colors"><span>Ingresar al Panel</span><span>→</span></div>
                     </div>
@@ -155,6 +156,7 @@
                         <div>
                             <span class="inline-block bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded mb-4 uppercase tracking-wider">División Agrícola</span>
                             <h3 class="text-2xl font-black text-slate-800 group-hover:text-yellow-700 transition-colors">Grupo Piña</h3>
+                            <p class="text-xs font-bold text-slate-400 uppercase mt-1 tracking-widest">Producción & Exportación</p>
                         </div>
                         <div class="flex items-center gap-2 text-xs font-bold text-slate-500 group-hover:text-yellow-600 transition-colors"><span>Ingresar al Panel</span><span>→</span></div>
                     </div>
@@ -356,15 +358,14 @@
             try {
                 globalWorkbook = XLSX.read(data, {type:'array'});
                 loadedFileName = name;
-                const sheets = globalWorkbook.SheetNames;
                 
-                // ASUMIMOS ORDEN: 0: VillasEgresos, 1: PinaEgresos, 2: VillasIngresos, 3: PinaIngresos
-                globalData.villas.egresos = sheets[0] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets[sheets[0]]) : [];
-                globalData.pina.egresos = sheets[1] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets[sheets[1]]) : [];
+                // LÓGICA ACTUALIZADA: Búsqueda exacta por nombres de hoja
+                globalData.villas.egresos = globalWorkbook.Sheets["Villas"] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets["Villas"]) : [];
+                globalData.pina.egresos = globalWorkbook.Sheets["Pina"] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets["Pina"]) : [];
                 
-                // Si el excel viejo no tiene ingresos, generamos los de prueba para no quebrar la app
-                globalData.villas.ingresos = sheets[2] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets[sheets[2]]) : getDummyIngresos();
-                globalData.pina.ingresos = sheets[3] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets[sheets[3]]) : getDummyIngresos();
+                // Si la hoja exacta "Villas In" o "Pina In" no existe, genera los datos de prueba
+                globalData.villas.ingresos = globalWorkbook.Sheets["Villas In"] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets["Villas In"]) : getDummyIngresos();
+                globalData.pina.ingresos = globalWorkbook.Sheets["Pina In"] ? XLSX.utils.sheet_to_json(globalWorkbook.Sheets["Pina In"]) : getDummyIngresos();
 
                 groupOverrides = { villas: {}, pina: {} };
                 document.getElementById('group-file-name').innerText = name;
@@ -646,13 +647,15 @@
 
         function saveExcel() {
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.villas.egresos), "Villas_Gastos");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pina.egresos), "Pina_Gastos");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.villas.ingresos), "Villas_Ingresos");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pina.ingresos), "Pina_Ingresos");
+            
+            // LÓGICA ACTUALIZADA: Guardar exactamente con los nombres que indicaste
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.villas.egresos), "Villas");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pina.egresos), "Pina");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.villas.ingresos), "Villas In");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pina.ingresos), "Pina In");
             
             XLSX.writeFile(wb, `EDITADO_${loadedFileName || 'Semana.xlsx'}`);
-            showToast("✅ Excel completo guardado con Gastos e Ingresos");
+            showToast("✅ Excel guardado con las hojas Villas, Pina, Villas In y Pina In");
         }
 
         function showScreen(id) {
