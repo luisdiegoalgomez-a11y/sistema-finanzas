@@ -28,9 +28,10 @@
         .group-expanded { background-color: #1e293b !important; color: #ffffff !important; border-bottom: none; }
         .group-expanded td { color: white !important; }
         .group-expanded .icon-arrow { transform: rotate(90deg); color: white; }
-        .detail-row { background-color: #ffffff; border-left: 3px solid #1e293b; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; height: 28px; }
+        .detail-row { background-color: #ffffff; border-left: 3px solid #1e293b; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #f1f5f9; height: 28px; transition: background-color 0.2s; }
+        .detail-row:hover { background-color: #f8fafc; } /* NUEVO: Hover en filas de detalle */
         
-        /* Inputs Generales (Ahora type text) */
+        /* Inputs Generales */
         .input-edit { background: transparent; border: 1px solid transparent; border-radius: 2px; padding: 0 4px; width: 95px; text-align: right; font-family: 'JetBrains Mono'; font-size: 12px; color: #0f172a; height: 24px; }
         .input-edit:hover, .input-edit:focus { background: #f8fafc; border-color: #cbd5e1; outline: none; }
         .input-changed { background: #dcfce7; border-color: #16a34a; font-weight: bold; color: #15803d; }
@@ -61,9 +62,27 @@
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+
+        /* NUEVO: Estilos para la notificación Toast */
+        #toast-notification {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            opacity: 0;
+            transform: translateY(-20px);
+            pointer-events: none;
+        }
+        #toast-notification.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="h-screen flex flex-col overflow-hidden relative">
+
+    <!-- NUEVO: Contenedor de Notificación Toast -->
+    <div id="toast-notification" class="absolute top-5 left-1/2 transform -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 font-bold text-sm tracking-wide">
+        <span class="text-emerald-400 text-lg">✅</span>
+        <span id="toast-message">Guardado exitosamente</span>
+    </div>
 
     <div id="screen-loading" class="absolute inset-0 z-50 bg-corporate flex flex-col items-center justify-center p-6 text-white">
         <div class="mb-8 text-center fade-in">
@@ -110,7 +129,7 @@
     <div id="screen-group" class="hidden absolute inset-0 z-40 bg-slate-50 flex items-center justify-center p-6">
         <div class="absolute top-0 left-0 w-full p-6 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <img src="logo-zasa.png" class="w-8 h-8 object-contain">
+                <img src="logo-zasa.png" onerror="this.src='https://placehold.co/64x64?text=GZ'" class="w-8 h-8 object-contain">
                 <div class="h-8 w-px bg-slate-300"></div>
                 <div>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Archivo Activo</p>
@@ -178,6 +197,7 @@
         <div class="flex-none bg-slate-50 border-b border-gray-200 p-4 z-20 shadow-md">
             <div class="max-w-7xl mx-auto">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <!-- Flujo CRC -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
                         <div class="bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 flex justify-between items-center">
                             <span class="text-white font-bold text-xs tracking-wide">FLUJO EN COLONES</span>
@@ -208,6 +228,7 @@
                         </div>
                     </div>
 
+                    <!-- Flujo USD -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
                         <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 flex justify-between items-center">
                             <span class="text-white font-bold text-xs tracking-wide">FLUJO EN DÓLARES</span>
@@ -242,12 +263,22 @@
         <div class="flex-1 overflow-auto p-6 bg-gray-100 custom-scroll">
             <div class="max-w-7xl mx-auto space-y-6">
                 <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                    <div class="bg-slate-50 px-6 py-2 border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
-                        <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider">Detalle de Partidas</h3>
-                        <span class="text-[10px] font-bold text-slate-400">Edición habilitada</span>
+                    
+                    <!-- NUEVO: Barra superior de la tabla con Buscador -->
+                    <div class="bg-slate-50 px-6 py-3 border-b border-gray-200 flex flex-wrap justify-between items-center sticky top-0 z-10 gap-4">
+                        <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                            Detalle de Partidas
+                        </h3>
+                        
+                        <!-- NUEVO: Input de búsqueda -->
+                        <div class="flex-1 max-w-sm relative">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
+                            <input type="text" id="search-input" onkeyup="renderDashboard()" placeholder="Buscar concepto o categoría..." class="w-full bg-white border border-gray-300 text-slate-700 text-xs rounded-lg pl-9 pr-3 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                        </div>
                     </div>
+
                     <table class="w-full text-xs border-collapse">
-                        <thead class="bg-white text-slate-400 text-[10px] uppercase font-bold tracking-wider border-b border-gray-100 sticky top-0">
+                        <thead class="bg-white text-slate-400 text-[10px] uppercase font-bold tracking-wider border-b border-gray-100 sticky top-[50px]">
                             <tr>
                                 <th class="px-6 py-3 text-left w-10"></th>
                                 <th class="px-6 py-3 text-left">Concepto</th>
@@ -272,7 +303,6 @@
         const ORDER_VILLAS = ["Mano de Obra","Servicios Públicos","Mantenimiento","Proveedores","Caja Chica","Impuestos","Seguridad","Jardinería","Alquileres"];
 
         let globalWorkbook = null;
-        let activeSheetName = "";
         let globalDataVillas = null;
         let globalDataPina = null;
         let currentView = "";
@@ -321,19 +351,20 @@
                 loadedFileName = name;
                 globalDataVillas = XLSX.utils.sheet_to_json(globalWorkbook.Sheets[globalWorkbook.SheetNames[0]]);
                 globalDataPina = XLSX.utils.sheet_to_json(globalWorkbook.Sheets[globalWorkbook.SheetNames[1]]);
-                groupOverrides = { villas: {}, pina: {} }; // Reset overrides
+                groupOverrides = { villas: {}, pina: {} }; 
                 document.getElementById('group-file-name').innerText = name;
                 document.getElementById('screen-loading').classList.add('hidden');
                 document.getElementById('loader-overlay').classList.add('hidden');
                 document.getElementById('screen-group').classList.remove('hidden');
                 document.getElementById('btn-save').classList.remove('hidden');
-            } catch(e) { alert("Archivo inválido."); }
+            } catch(e) { showToast("Error al leer el archivo. Formato inválido.", true); }
         }
 
         function selectGroup(g) {
             currentView = g;
             document.getElementById('dash-title').innerText = g==='villas' ? "GRUPO VILLAS" : "GRUPO PIÑA";
             expandedGroup = null; 
+            document.getElementById('search-input').value = ""; // NUEVO: Limpiar buscador al cambiar
             renderDashboard();
             showScreen('screen-dashboard');
         }
@@ -347,15 +378,12 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // --- FORMATO CON ESPACIOS ---
         function formatInput(val) {
             if (!val && val !== 0) return "";
-            // Formato es-CR usa espacios para miles (ej: 1 000 000)
             return new Intl.NumberFormat('es-CR', {maximumFractionDigits: 2}).format(val);
         }
 
         function cleanInput(val) {
-            // Remueve todo lo que no sea número, punto o negativo
             return val.replace(/[^0-9.-]/g, '');
         }
 
@@ -391,7 +419,6 @@
                 }
             });
 
-            // Apply Overrides
             let finalExpCRC = 0;
             let finalExpUSD = 0;
             for (const key in groups) {
@@ -456,18 +483,34 @@
             const fmt = (n,c) => n > 0 ? new Intl.NumberFormat(c==='CRC'?'es-CR':'en-US',{style:'currency',currency:c, maximumFractionDigits:0}).format(n) : '';
             const currentOrder = currentView === 'villas' ? ORDER_VILLAS : ORDER_PINA;
             
+            // NUEVO: Lógica del buscador
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            
             let keys = Object.keys(groups).sort((a,b) => {
                 const iA = currentOrder.indexOf(a), iB = currentOrder.indexOf(b);
                 if(iA!==-1 && iB!==-1) return iA-iB; if(iA!==-1) return -1; if(iB!==-1) return 1; return a.localeCompare(b);
             });
 
+            let visibleGroups = 0;
+
             keys.forEach((k, idx) => {
                 const g = groups[k]; if(g.tC===0 && g.tU===0 && g.manualC===null && g.manualU===null) return;
+                
+                // NUEVO: Filtrar categorías
+                const categoryMatches = k.toLowerCase().includes(searchTerm);
+                const matchingItems = g.items.filter(it => it.desc.toLowerCase().includes(searchTerm));
+                
+                if (searchTerm && !categoryMatches && matchingItems.length === 0) return; // Omitir si no hay coincidencia
+                
+                visibleGroups++;
                 const rid = `g-${idx}`;
                 const spacer = document.createElement('tr'); spacer.className = 'h-1 bg-transparent border-none'; tbody.appendChild(spacer);
 
                 const tr = document.createElement('tr');
-                const isExpanded = (expandedGroup === rid);
+                
+                // Si hay búsqueda y encontró algo adentro, expandir automáticamente
+                let isExpanded = (expandedGroup === rid) || (searchTerm !== "" && matchingItems.length > 0);
+                
                 tr.className = isExpanded ? 'group-header group-expanded' : 'group-header';
                 tr.onclick = (e) => { if(e.target.tagName !== 'INPUT') toggle(rid); };
 
@@ -500,7 +543,10 @@
                 `;
                 tbody.appendChild(tr);
 
-                g.items.forEach(it => {
+                // Solo mostrar los items que coinciden con la búsqueda si hay un término activo
+                const itemsToRender = searchTerm ? (categoryMatches ? g.items : matchingItems) : g.items;
+
+                itemsToRender.forEach(it => {
                     const sub = document.createElement('tr');
                     sub.className = isExpanded ? `detail-row ${rid}` : `hidden detail-row ${rid}`;
                     sub.innerHTML = `
@@ -528,6 +574,11 @@
                     tbody.appendChild(sub);
                 });
             });
+
+            // NUEVO: Mensaje si no hay resultados en la búsqueda
+            if (visibleGroups === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400 text-xs font-bold">No se encontraron resultados para "${searchTerm}"</td></tr>`;
+            }
         }
 
         function updateGroupOverride(category, currency, val) {
@@ -544,13 +595,27 @@
             renderDashboard();
         }
 
+        // NUEVO: Lógica para notificaciones Toast más limpias
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = msg;
+            toast.className = `absolute top-5 left-1/2 transform -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 font-bold text-sm tracking-wide ${isError ? 'bg-red-600 text-white' : 'bg-slate-900 text-white'} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
         function saveExcel() {
             const sheetVillas = XLSX.utils.json_to_sheet(globalDataVillas);
             const sheetPina = XLSX.utils.json_to_sheet(globalDataPina);
             globalWorkbook.Sheets[globalWorkbook.SheetNames[0]] = sheetVillas;
             globalWorkbook.Sheets[globalWorkbook.SheetNames[1]] = sheetPina;
             XLSX.writeFile(globalWorkbook, `EDITADO_${loadedFileName}`);
-            alert("✅ Guardado. Sube el archivo a GitHub.");
+            
+            // NUEVO: Reemplazado alert() por un Toast moderno
+            showToast("✅ Cambios guardados localmente. Sube el archivo a la nube.");
         }
 
         function showScreen(id) {
@@ -559,7 +624,14 @@
         }
         function toggle(id) {
             if (expandedGroup === id) expandedGroup = null; else expandedGroup = id;
-            renderDashboard();
+            
+            // Forzamos el re-renderizado solo si NO hay búsqueda activa para no perder el toggle manual
+            if(document.getElementById('search-input').value === "") {
+                renderDashboard();
+            } else {
+                // Pequeña lógica para expandir/colapsar visualmente sin repintar todo el dom cuando hay búsqueda
+                renderDashboard(); 
+            }
         }
     </script>
 </body>
